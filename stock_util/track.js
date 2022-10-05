@@ -5,10 +5,12 @@ const binance = new Binance().options({
 });
 const Snapshot = require('../models/Snapshot');
 
-const fetchPrices = async () => {
+const fetchPrices = async (id) => {
     let tickers = await binance.futuresPrices();
     let newSnapShot = new Snapshot({
-        tickers
+        id: id || null,
+        date: Date(),
+        tickers,
     })
 
     return newSnapShot.save()
@@ -16,4 +18,12 @@ const fetchPrices = async () => {
         .catch(err => err);
 }
 
-module.exports = { fetchPrices };
+const CREATE_FETCH_LOOP = (min, id=0) => {
+    fetchPrices(id)
+    setTimeout(() => {
+        id = id + 1
+        CREATE_FETCH_LOOP(min, id)
+    }, 1000 * 60 * min)
+};
+
+module.exports = { fetchPrices, CREATE_FETCH_LOOP };
