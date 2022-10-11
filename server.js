@@ -13,10 +13,14 @@ mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
 app.use(express.json());
 
 const traderRoutes = require('./routes/api/trader');
+const { CREATE_LOOP } = require('./util');
+const { runAllTraders } = require('./stock_util/trader');
 app.use('/api/trader', traderRoutes);
 
 app.get('/', (req, res) => {
     res.send('stockbot home')
 });
+
+CREATE_LOOP(runAllTraders, 0.5)
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));

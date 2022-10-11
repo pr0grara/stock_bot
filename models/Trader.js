@@ -5,12 +5,14 @@ const TraderInstanceSchema = new Schema({
     id: { type: String },
     asset: { type: String },
     quantity: { type: Number },
-    price: { type: Number },
-    sellTarget: { type: Number },
-    buyTarget: { type: Number },
+    purchasePrice: { type: Number },
+    sellPrice: { type: Number },
+    rebuyPrice: { type: Number },
     allowance: { type: Number },
-    receipt: { type: Object },
-    date: { type: Date, default: Date() }
+    buyReceipt: { type: Object },
+    sellReceipt: { type: Object },
+    date: { type: Date, default: Date() },
+    liquidatedAt: { type: Date }
 })
 
 const Trader = mongoose.model('Trader', TraderInstanceSchema)

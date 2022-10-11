@@ -2,8 +2,6 @@ require('dotenv').config();
 const ccxt = require('ccxt');
 const axios = require('axios');
 const { CREATE_LOOP, idGenerator } = require('../util');
-const Trader = require('../models/Trader');
-const mongoose = require('mongoose');
 
 let coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
@@ -38,27 +36,6 @@ const checkMarketPrice = async (ticker) => {
     console.log(price.info.price);
     return price.info.price;
 }
-
-const MakeNewTraderInstance = async (asset, quantity, allowance) => {
-    mongoose.connect(process.env.AZBSTOCKBOT_MONGO);
-
-    let price = await checkMarketPrice(asset + '/USD');
-    let receipt = await makeCoinbaseBuy(asset + "/USD", quantity);
-    allowance = allowance || quantity * price;
-
-    let newTrader = new Trader({
-        id: idGenerator(),
-        asset,
-        quantity,
-        price,
-        allowance,
-        receipt
-    })
-    newTrader.save()
-        .then(res => console.log(res))
-        .catch(err => console.log("ERROR", err));
-}
-
 
 const run = async () => {
     const results = await Promise.all([
@@ -108,11 +85,11 @@ const ethereum = async () => {
 // run()
 // ethereum()
 
-CREATE_LOOP(ethereum, 0.5);
+// CREATE_LOOP(ethereum, 0.5);
 // checkMarketPrice('ETH/USD')
 // MakeNewTraderInstance("ETH", 0.01)
 
 // makeCoinbaseSell("ADA/USD", 5)
 // makeCoinbaseBuy("ETH/USD", 0.01);
 
-module.exports = { ethereum, MakeNewTraderInstance }
+module.exports = { ethereum, checkMarketPrice, getCoinbaseBalances, makeCoinbaseBuy, makeCoinbaseSell, checkCoinbaseFunds }
