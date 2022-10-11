@@ -34,6 +34,7 @@ const runAllTraders = async () => {
             console.log(`sell price met for ${trader.id}`)
             CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
                 .then(res => {
+                    SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${currentPrice}\nPurchase price was ${trader.purchasePrice}`);
                     trader.update({
                         quantity: 0,
                         sellReceipt: res,
@@ -45,6 +46,7 @@ const runAllTraders = async () => {
             console.log(`sell price not met for ${trader.id}`)
         }
     })
+    return traders;
 }
 
 module.exports = { runAllTraders };

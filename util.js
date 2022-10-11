@@ -1,5 +1,6 @@
 // const axios = require('axios');
 // const { PROXY_URL } = require('../config');
+const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 
 const numPicker = (boolean) => {
     var num;
@@ -39,4 +40,13 @@ const CREATE_LOOP = (func, min) => {
     }, 1000 * 60 * min)
 };
 
-module.exports = {  numPicker, idGenerator, CREATE_LOOP };
+const SEND_SMS = (message) => {
+    twilio.messages
+        .create({
+            body: message,
+            from: "+13158030650",
+            to: "+19252553225"
+        });
+}
+
+module.exports = {  numPicker, idGenerator, CREATE_LOOP, SEND_SMS };
