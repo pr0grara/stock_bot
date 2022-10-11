@@ -1,13 +1,14 @@
 const Trader = require('../models/Trader');
 const mongoose = require('mongoose');
 const CBP = require('../ccxt/coinbasepro');
-const { SEND_SMS } = require('../util');
+const { idGenerator, SEND_SMS } = require('../util');
 
 const makeNewTrader = async (asset, quantity, allowance) => {
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
     let sellPrice = purchasePrice * 1.02;
     let rebuyPrice = purchasePrice;
-    let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
+    // let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
+    let receipt = {};
     allowance = allowance || quantity * purchasePrice;
 
     let newTrader = new Trader({
@@ -20,6 +21,7 @@ const makeNewTrader = async (asset, quantity, allowance) => {
         allowance,
         receipt
     });
+    
     newTrader.save()
         .then(res => {
             console.log(res);
