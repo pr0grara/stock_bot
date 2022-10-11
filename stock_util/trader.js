@@ -26,6 +26,7 @@ const makeNewTrader = async (asset, quantity, allowance) => {
             SEND_SMS(`New trader ${id} created. Position: ${quantity} X ${asset} @ ${purchasePrice}`);
         })
         .catch(err => console.log("ERROR", err));
+    return newTrader;
 }
 
 const runAllTraders = async () => {

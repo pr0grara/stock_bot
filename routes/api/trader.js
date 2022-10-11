@@ -18,6 +18,7 @@ route.post('/make-new', async (req, res) => {
     let asset = req.data.asset;
     let quantity = req.data.quantity;
     let newTrader = await newTrader(asset, quantity);
+    if (!!newTrader) res.status(200).json(newTrader).end();
 })
 
 module.exports = route;
