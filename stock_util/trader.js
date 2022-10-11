@@ -4,10 +4,10 @@ const CBP = require('../ccxt/coinbasepro');
 const { SEND_SMS } = require('../util');
 
 const makeNewTrader = async (asset, quantity, allowance) => {
-    let purchasePrice = await checkMarketPrice(asset + '/USD');
+    let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
     let sellPrice = purchasePrice * 1.02;
     let rebuyPrice = purchasePrice;
-    let receipt = await makeCoinbaseBuy(asset + "/USD", quantity);
+    let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
     allowance = allowance || quantity * price;
 
     let newTrader = new Trader({
