@@ -1,17 +1,15 @@
 require('dotenv').config();
 const ccxt = require('ccxt');
 const axios = require('axios');
-const { CREATE_LOOP } = require('./util');
+const { CREATE_LOOP, idGenerator } = require('../util');
+const Trader = require('../models/Trader');
+const mongoose = require('mongoose');
 
 let coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
     apiKey: process.env.CBP3_KEY,
     secret: process.env.CBP3_SECRET
-    // apiKey: process.env.AZSTOCKBOT_KEY,
-    // secret: process.env.AZSTOCKBOT_SECRET
 });
-
-console.log(process.env.AZSTOCKBOT_KEY, process.env.AZSTOCKBOT_SECRET)
 
 const checkCoinbaseFunds = async () => {
     let funds = await coinbasepro.fetchTotalBalance();
@@ -27,6 +25,7 @@ const getCoinbaseBalances = async (symbol) => {
 const makeCoinbaseBuy = async (asset, quantity) => {
     let buyOrder = await coinbasepro.createOrder(asset, "market", "buy", quantity)
     console.log(buyOrder)
+    return buyOrder;
 }
 
 const makeCoinbaseSell = async (asset, quantity) => {
@@ -37,7 +36,29 @@ const makeCoinbaseSell = async (asset, quantity) => {
 const checkMarketPrice = async (ticker) => {
     const price = await coinbasepro.fetchTicker(ticker)
     console.log(price.info.price);
+    return price.info.price;
 }
+
+const MakeNewTraderInstance = async (asset, quantity, allowance) => {
+    mongoose.connect(process.env.AZBSTOCKBOT_MONGO);
+
+    let price = await checkMarketPrice(asset + '/USD');
+    let receipt = await makeCoinbaseBuy(asset + "/USD", quantity);
+    allowance = allowance || quantity * price;
+
+    let newTrader = new Trader({
+        id: idGenerator(),
+        asset,
+        quantity,
+        price,
+        allowance,
+        receipt
+    })
+    newTrader.save()
+        .then(res => console.log(res))
+        .catch(err => console.log("ERROR", err));
+}
+
 
 const run = async () => {
     const results = await Promise.all([
@@ -56,7 +77,7 @@ const describeCcxtExchanges = () => {
     // console.log(ccxt.exchanges);
     let CCXT_CLASSES = Object.keys(ccxt);
     let exchanges = ccxt.exchanges;
-    
+
     CCXT_CLASSES.forEach(clas => {
         if (exchanges.includes(clas)) {
             // ccxt.coinbase.describe()
@@ -88,8 +109,10 @@ const ethereum = async () => {
 // ethereum()
 
 CREATE_LOOP(ethereum, 0.5);
+// checkMarketPrice('ETH/USD')
+// MakeNewTraderInstance("ETH", 0.01)
 
 // makeCoinbaseSell("ADA/USD", 5)
 // makeCoinbaseBuy("ETH/USD", 0.01);
 
-module.exports = { ethereum }
+module.exports = { ethereum, MakeNewTraderInstance }
