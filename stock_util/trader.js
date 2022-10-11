@@ -1,10 +1,9 @@
 const Trader = require('../models/Trader');
 const mongoose = require('mongoose');
 const CBP = require('../ccxt/coinbasepro');
+const { SEND_SMS } = require('../util');
 
-const MakeNewTraderInstance = async (asset, quantity, allowance) => {
-    mongoose.connect(process.env.AZBSTOCKBOT_MONGO);
-
+const makeNewTrader = async (asset, quantity, allowance) => {
     let purchasePrice = await checkMarketPrice(asset + '/USD');
     let sellPrice = purchasePrice * 1.02;
     let rebuyPrice = purchasePrice;
@@ -20,9 +19,12 @@ const MakeNewTraderInstance = async (asset, quantity, allowance) => {
         rebuyPrice,
         allowance,
         receipt
-    })
+    });
     newTrader.save()
-        .then(res => console.log(res))
+        .then(res => {
+            console.log(res);
+            SEND_SMS(`New trader ${id} created. Position: ${quantity} X ${asset} @ ${purchasePrice}`);
+        })
         .catch(err => console.log("ERROR", err));
 }
 
@@ -49,4 +51,4 @@ const runAllTraders = async () => {
     return traders;
 }
 
-module.exports = { runAllTraders };
+module.exports = { makeNewTrader, runAllTraders };
