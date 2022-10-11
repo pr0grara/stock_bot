@@ -8,7 +8,7 @@ const makeNewTrader = async (asset, quantity, allowance) => {
     let sellPrice = purchasePrice * 1.02;
     let rebuyPrice = purchasePrice;
     let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
-    allowance = allowance || quantity * price;
+    allowance = allowance || quantity * purchasePrice;
 
     let newTrader = new Trader({
         id: idGenerator(),
