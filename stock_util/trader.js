@@ -35,7 +35,7 @@ const makeNewTrader = async (asset, quantity, allowance) => {
 
 const liquidateTrader = (trader, soldAtPrice) => {
     LiquidatedTrader.insertMany(trader)
-        .then(() => Trader.remove({ where: { id: trader.id } }));
+        .then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
     CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
         .then(res => {
             let purchaseAmnt = trader.quantity * trader.purchasePrice;
@@ -71,6 +71,9 @@ const runAllTraders = async () => {
     let prices = {};
 
     for (const trader of traders) {
+        if (trader.id === "6") {
+            console.log(trader.id)
+        }
         if (!prices[trader.asset]) {
             currentPrice = await CBP.checkMarketPrice(trader.asset + "/USD");
             prices[trader.asset] = currentPrice;

@@ -86,10 +86,11 @@ const ethereum = async () => {
 // ethereum()
 
 // CREATE_LOOP(ethereum, 0.5);
-// checkMarketPrice('ETH/USD')
+// checkMarketPrice('DOGE/USD');
 // MakeNewTraderInstance("ETH", 0.01)
 
 // makeCoinbaseSell("ETH/USD", .01)
 // makeCoinbaseBuy("ETH/USD", 0.01);
+console.log(Date())
 
 module.exports = { ethereum, checkMarketPrice, getCoinbaseBalances, makeCoinbaseBuy, makeCoinbaseSell, checkCoinbaseFunds }
