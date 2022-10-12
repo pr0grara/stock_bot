@@ -71,9 +71,6 @@ const runAllTraders = async () => {
     let prices = {};
 
     for (const trader of traders) {
-        if (trader.id === "6") {
-            console.log(trader.id)
-        }
         if (!prices[trader.asset]) {
             currentPrice = await CBP.checkMarketPrice(trader.asset + "/USD");
             prices[trader.asset] = currentPrice;
