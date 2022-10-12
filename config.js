@@ -1,3 +1,3 @@
-const PROD = process.env.PORT === 8080;
+const PROD = process.env.PRODUCTION === "true";
 
-module.exports = { PROD }
+module.exports = { PROD };
