@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const PORT = process.env.PORT || 3000;
+const config = require('./config');
 
 mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
     .then(() => console.log('connected to mongo'))
@@ -19,6 +20,6 @@ app.get('/', (req, res) => {
     res.send('stockbot home')
 });
 
-CREATE_LOOP(runAllTraders, 0.5)
+if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));

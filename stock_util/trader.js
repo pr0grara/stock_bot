@@ -1,4 +1,6 @@
 const Trader = require('../models/Trader');
+const LiquidatedTrader = require('../models/LiquidatedTrader');
+const Sale = require('../models/Sale');
 const mongoose = require('mongoose');
 const CBP = require('../ccxt/coinbasepro');
 const { idGenerator, SEND_SMS } = require('../util');
@@ -31,22 +33,46 @@ const makeNewTrader = async (asset, quantity, allowance) => {
     return newTrader;
 }
 
+const liquidateTrader = (trader, soldAtPrice) => {
+    LiquidatedTrader.insertMany(trader)
+        .then(() => Trader.remove({ where: { id: trader.id } }))
+    CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
+        .then(res => {
+            let purchaseAmnt = trader.quantity * trader.purchasePrice;
+            let sellAmnt = trader.quantity * soldAtPrice;
+            let profit = sellAmnt - purchaseAmnt;
+            let purchaseDate = new Date(trader.date);
+            let purchaseUnix = purchaseDate.getTime();
+            let duration = Date.now() - purchaseUnix;
+            duration = (duration / 1000 / 60 / 24).toFixed(1);
+            let newSale = new Sale({
+                id: idGenerator(),
+                traderId: trader.id,
+                asset: trader.asset,
+                quantity: trader.quantity,
+                purchasePrice: trader.purchasePrice,
+                sellPrice: soldAtPrice,
+                profit,
+                duration
+            })
+            newSale.save();
+            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${currentPrice}\nPurchase price was ${trader.purchasePrice}`);
+            trader.update({
+                quantity: 0,
+                sellReceipt: res,
+                liquidatedAt: Date()
+            })
+        })
+        .catch(err => console.log(err))
+};
+
 const runAllTraders = async () => {
     let traders = await Trader.find({});
     traders.forEach(async trader => {
         let currentPrice = await CBP.checkMarketPrice(trader.asset + "/USD");
         if (currentPrice >= trader.sellPrice) {
             console.log(`sell price met for ${trader.id}`)
-            CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
-                .then(res => {
-                    SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${currentPrice}\nPurchase price was ${trader.purchasePrice}`);
-                    trader.update({
-                        quantity: 0,
-                        sellReceipt: res,
-                        liquidatedAt: Date()
-                    })
-                })
-                .catch(err => console.log(err))
+            liquidateTrader(trader, currentPrice);
         } else {
             console.log(`sell price not met for ${trader.id}`)
         }
