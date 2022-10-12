@@ -8,7 +8,7 @@ const { idGenerator, SEND_SMS } = require('../util');
 const makeNewTrader = async (asset, quantity, allowance) => {
     let id = idGenerator();
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
-    let sellPrice = purchasePrice * 1.02;
+    let sellPrice = purchasePrice * 1.03;
     let rebuyPrice = purchasePrice;
     let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
     allowance = allowance || quantity * purchasePrice;
