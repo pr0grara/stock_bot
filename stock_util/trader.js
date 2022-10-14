@@ -4,6 +4,8 @@ const Sale = require('../models/Sale');
 const mongoose = require('mongoose');
 const CBP = require('../ccxt/coinbasepro');
 const { idGenerator, SEND_SMS } = require('../util');
+const { analyze, buyBool } = require('./coinbasepro/analyze');
+
 
 const makeNewTrader = async (asset, quantity, allowance) => {
     let id = idGenerator();
@@ -69,22 +71,50 @@ const liquidateTrader = (trader, soldAtPrice) => {
 const runAllTraders = async () => {
     let traders = await Trader.find({});
     let prices = {};
-
+    
     for (const trader of traders) {
+        let currentPrice;
         if (!prices[trader.asset]) {
             currentPrice = await CBP.checkMarketPrice(trader.asset + "/USD");
             prices[trader.asset] = currentPrice;
         } else {
             currentPrice = prices[trader.asset];
-        }
+        };
+
         if (currentPrice >= trader.sellPrice) {
-            console.log(`sell price met for ${trader.id}`)
+            console.log(`sell price met for ${trader.id}`);
             liquidateTrader(trader, currentPrice);
         } else {
-            console.log(`sell price not met for ${trader.id}`)
-        }
+            console.log(`sell price not met for ${trader.id}`);
+        };
     }
     return traders;
+};
+
+const findLastPurchaseTime = (traders, asset) => {
+    let lastPurchases = traders.filter(trader => trader.asset === asset);
+    let lastPurchase = lastPurchases[lastPurchases.length - 1];
+    let previousDate = new Date(lastPurchase.date)
+    let unixTime = previousDate.getTime();
+    return unixTime;
 }
 
-module.exports = { makeNewTrader, runAllTraders };
+const analyzeAssetsAndBuy = async (allowance) => {
+    if (!allowance) return;
+    let traders = await Trader.find({});
+    let assets = ["ETH", "ADA", "DOGE", "LTC"];
+
+    for (const asset of assets) {
+        let lastPurchased = findLastPurchaseTime(traders, asset);
+        if (Date.now() - (1000 * 60 * 30) - lastPurchased < 0) return; //if purchase was made within 30 min then do not purchase same asset again
+        let analysis = await analyze(asset + "-USD");
+        let bool = await buyBool(analysis);
+        if (bool === true) {
+            let quantity = allowance / analysis.currentPrice;
+            console.log("BUY TEST PASSED FROM ANALYSIS: ", JSON.stringify(analysis))
+            makeNewTrader(asset, quantity);
+        }
+    }
+}
+
+module.exports = { makeNewTrader, runAllTraders, analyzeAssetsAndBuy };

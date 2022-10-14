@@ -91,6 +91,6 @@ const ethereum = async () => {
 
 // makeCoinbaseSell("ETH/USD", .01)
 // makeCoinbaseBuy("ETH/USD", 0.01);
-console.log(Date())
+// console.log(Date())
 
 module.exports = { ethereum, checkMarketPrice, getCoinbaseBalances, makeCoinbaseBuy, makeCoinbaseSell, checkCoinbaseFunds }

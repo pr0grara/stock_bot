@@ -42,14 +42,9 @@ const filterSnaps = (params, snaps) => {
 }
 
 const grabHistoricalData = async (startDate, endDate) => {
-
-    // binance.futuresChart('BTCUSDT', '1m', console.log);
-
     let ticker = await binance.prices();
     console.info(`Price of BNB: ${ticker.BNBUSDT}`);
     console.info(await binance.futuresAccount());
-
-
 }
 
 grabHistoricalData()

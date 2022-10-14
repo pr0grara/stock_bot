@@ -13,7 +13,7 @@ app.use(express.json());
 
 const traderRoutes = require('./routes/api/trader');
 const { CREATE_LOOP } = require('./util');
-const { runAllTraders } = require('./stock_util/trader');
+const { runAllTraders, analyzeAssetsAndBuy } = require('./stock_util/trader');
 app.use('/api/trader', traderRoutes);
 
 app.get('/', (req, res) => {
@@ -21,5 +21,8 @@ app.get('/', (req, res) => {
 });
 
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
+if (config.PROD) CREATE_LOOP(analyzeAssetsAndBuy(10), .95);
+
+analyzeAssetsAndBuy(10);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
