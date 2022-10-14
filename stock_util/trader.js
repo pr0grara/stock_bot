@@ -106,7 +106,7 @@ const analyzeAssetsAndBuy = async (usdAllowance) => {
     let funds = await CBP.checkCoinbaseFunds();
     if (funds.USD < 10) return;
     let traders = await Trader.find({});
-    let assets = ["ETH", "ADA", "DOGE", "LTC"];
+    let assets = ["ETH", "ADA", "DOGE", "LTC", "BTC"];
 
     for (const asset of assets) {
         let lastPurchased = findLastPurchaseTime(traders, asset);
