@@ -21,9 +21,9 @@ route.post('/make-new', async (req, res) => {
     if (!!newTrader) res.status(200).json(newTrader).end();
 });
 
-route.get('/test-new', (req, res) => {
-    analyzeAssetsAndBuy(10);
-    res.status(200).send('tesdt').end()
-})
+// route.get('/test-new', (req, res) => {
+//     analyzeAssetsAndBuy(10);
+//     res.status(200).send('tesdt').end()
+// })
 
 module.exports = route;
