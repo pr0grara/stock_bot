@@ -14,6 +14,7 @@ route.post('/make-new', async (req, res) => {
     let buyParams = {
         asset: req.body.asset,
         quantity: req.body.quantity,
+        usd: req.body.usd,
         profitTarget: req.body.profitTarget
     };
     let newTrader = await makeNewTrader(buyParams, false);
