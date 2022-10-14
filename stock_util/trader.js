@@ -9,9 +9,9 @@ const { analyze, buyBool } = require('./coinbasepro/analyze');
 const makeNewTrader = async (buyParams, autoBool) => {
     let [asset, quantity, usd, profitTarget] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget];
     if (!profitTarget) profitTarget = 1.03;
-    if (!!usd) quantity = usd / purchasePrice;
     let id = idGenerator();
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
+    if (!!usd) quantity = usd / purchasePrice;
     let sellPrice = purchasePrice * profitTarget;
     let rebuyPrice = purchasePrice;
     let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
