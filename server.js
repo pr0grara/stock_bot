@@ -12,9 +12,11 @@ mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
 app.use(express.json());
 
 const traderRoutes = require('./routes/api/trader');
+const analyzeRoutes = require('./routes/api/analyze');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, analyzeAssetsAndBuy } = require('./stock_util/trader');
 app.use('/api/trader', traderRoutes);
+app.use('/api/analyze', analyzeRoutes);
 
 app.get('/', (req, res) => {
     res.send('stockbot home')

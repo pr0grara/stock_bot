@@ -124,7 +124,7 @@ const analyzeAllAssets = async () => {
     console.log(JSON.stringify(report))
 }
 
-analyzeAllAssets()
+// analyzeAllAssets()
 // analyze("SHPING-USD").then(res => console.log(res))
 
 // analyze("ETH-USD");
