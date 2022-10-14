@@ -3,7 +3,6 @@ const Trader = require('../../models/Trader');
 const CBP = require('../../ccxt/coinbasepro');
 const { SEND_SMS } = require('../../util');
 const { runAllTraders, makeNewTrader } = require('../../stock_util/trader');
-const { Router } = require('express');
 
 route.get('/', (req, res) => {
     res.status(200).send('trader home').end();
