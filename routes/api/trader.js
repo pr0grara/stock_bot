@@ -1,7 +1,4 @@
 const route = require('express').Router();
-const Trader = require('../../models/Trader');
-const CBP = require('../../ccxt/coinbasepro');
-const { SEND_SMS } = require('../../util');
 const { runAllTraders, makeNewTrader } = require('../../stock_util/trader');
 
 route.get('/', (req, res) => {
@@ -14,9 +11,12 @@ route.post('/run-all', async (req, res) => {
 })
 
 route.post('/make-new', async (req, res) => {
-    let asset = req.body.asset;
-    let quantity = req.body.quantity;
-    let newTrader = await makeNewTrader(asset, quantity);
+    let buyParams = {
+        asset: req.body.asset,
+        quantity: req.body.quantity,
+        profitTarget: req.body.profitTarget
+    };
+    let newTrader = await makeNewTrader(buyParams, false);
     if (!!newTrader) res.status(200).json(newTrader).end();
 })
 
