@@ -12,6 +12,7 @@ const TraderInstanceSchema = new Schema({
     buyReceipt: { type: Object },
     sellReceipt: { type: Object },
     date: { type: Date, default: Date() },
+    unix: { type: Number, default: Date.now() },
     liquidatedAt: { type: Date }
 })
 

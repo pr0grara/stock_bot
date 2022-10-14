@@ -12,6 +12,7 @@ let coinbasepro = new ccxt.coinbasepro({
 const checkCoinbaseFunds = async () => {
     let funds = await coinbasepro.fetchTotalBalance();
     console.log(funds)
+    return funds;
 }
 
 const getCoinbaseBalances = async (symbol) => {

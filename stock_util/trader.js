@@ -1,7 +1,6 @@
 const Trader = require('../models/Trader');
 const LiquidatedTrader = require('../models/LiquidatedTrader');
 const Sale = require('../models/Sale');
-const mongoose = require('mongoose');
 const CBP = require('../ccxt/coinbasepro');
 const { idGenerator, SEND_SMS } = require('../util');
 const { analyze, buyBool } = require('./coinbasepro/analyze');
@@ -12,7 +11,8 @@ const makeNewTrader = async (asset, quantity, allowance) => {
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
     let sellPrice = purchasePrice * 1.03;
     let rebuyPrice = purchasePrice;
-    let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
+    let receipt ={};
+    // let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
     allowance = allowance || quantity * purchasePrice;
 
     let newTrader = new Trader({
@@ -94,19 +94,20 @@ const runAllTraders = async () => {
 const findLastPurchaseTime = (traders, asset) => {
     let lastPurchases = traders.filter(trader => trader.asset === asset);
     let lastPurchase = lastPurchases[lastPurchases.length - 1];
-    let previousDate = new Date(lastPurchase.date)
-    let unixTime = previousDate.getTime();
+    let unixTime = lastPurchase.unix;
     return unixTime;
 }
 
 const analyzeAssetsAndBuy = async (allowance) => {
     if (!allowance) return;
+    let funds = await CBP.checkCoinbaseFunds();
+    if (funds.USD < 10) return;
     let traders = await Trader.find({});
     let assets = ["ETH", "ADA", "DOGE", "LTC"];
 
     for (const asset of assets) {
         let lastPurchased = findLastPurchaseTime(traders, asset);
-        if (Date.now() - (1000 * 60 * 30) - lastPurchased < 0) return; //if purchase was made within 30 min then do not purchase same asset again
+        if (Date.now() - (1000 * 60 * 30) - lastPurchased < 0) continue; //if purchase was made within 30 min then do not purchase same asset again
         let analysis = await analyze(asset + "-USD");
         let bool = await buyBool(analysis);
         if (bool === true) {

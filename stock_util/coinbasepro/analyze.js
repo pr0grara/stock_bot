@@ -13,7 +13,7 @@ const grabCandleData = async (product_id) => {
     let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=900`);//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
     candles = candles.data;
     let prices = {};
-    let pricesArr = candles.map(candle => parseFloat(((candle[1] + candle[2]) / 2).toFixed(2)));
+    let pricesArr = candles.map(candle => parseFloat(((candle[1] + candle[2]) / 2)));
     let low = { price: pricesArr[0], minute: 0 };
     let high = { price: 0, minute: 0 };
     pricesArr.forEach((price, idx) => {
@@ -86,17 +86,18 @@ const analyze = async (product_id, currentPrice) => {
         delta,
         currentPrice,
         product_id,
+        // prices: historicalPrices["prices"],
         time: Date.now()
     };
-    let newAnalysis = new Analysis({
-        id: idGenerator(),
-        product_id,
-        percent,
-        delta,
-        currentPrice,
-        time: Date.now()
-    })
-    newAnalysis.save().catch(err => console.log(err));
+    // let newAnalysis = new Analysis({
+    //     id: idGenerator(),
+    //     product_id,
+    //     percent,
+    //     delta,
+    //     currentPrice,
+    //     time: Date.now()
+    // })
+    // newAnalysis.save().catch(err => console.log(err));
     return analysis;
 }
 
@@ -111,6 +112,21 @@ const buyBool = async (analysis, product_id, currentPrice) => {
     return true; //if all checks pass then BUY
 }
 
-analyze("ETH-USD");
+const product_ids = require('../../docs/cb_product_id.json');
+
+const analyzeAllAssets = async () => {
+    let report = [];
+    for (const product_id of product_ids) {
+        let analysis = await analyze(product_id);
+        let bool = await buyBool(analysis);
+        if (bool === true) report.push(analysis);
+    }
+    console.log(JSON.stringify(report))
+}
+
+analyzeAllAssets()
+// analyze("SHPING-USD").then(res => console.log(res))
+
+// analyze("ETH-USD");
 
 module.exports = { analyze, buyBool };

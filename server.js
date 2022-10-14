@@ -23,6 +23,4 @@ app.get('/', (req, res) => {
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);
 
-analyzeAssetsAndBuy(10);
-
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
