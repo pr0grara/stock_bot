@@ -94,13 +94,6 @@ const runAllTraders = async () => {
     return traders;
 };
 
-const findLastPurchaseTime = (traders, asset) => {
-    let lastPurchases = traders.filter(trader => trader.asset === asset);
-    let lastPurchase = lastPurchases[lastPurchases.length - 1];
-    let unixTime = lastPurchase.unix;
-    return unixTime;
-}
-
 const analyzeAssetsAndBuy = async (usdAllowance) => {
     if (!usdAllowance) return;
     let funds = await CBP.checkCoinbaseFunds();
@@ -109,7 +102,10 @@ const analyzeAssetsAndBuy = async (usdAllowance) => {
     let assets = ["ETH", "ADA", "DOGE", "LTC", "BTC"];
 
     for (const asset of assets) {
-        let lastPurchased = findLastPurchaseTime(traders, asset);
+        let lastPurchases = traders.filter(trader => trader.asset === asset);
+        if (lastPurchases.length === 0) continue;
+        let lastPurchase = lastPurchases[lastPurchases.length - 1];
+        let lastPurchased = lastPurchase.unix;
         if (Date.now() - (1000 * 60 * 30) - lastPurchased < 0) continue; //if purchase was made within 30 min then do not purchase same asset again
         let analysis = await analyze(asset + "-USD");
         let bool = await buyBool(analysis);

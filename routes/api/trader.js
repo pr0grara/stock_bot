@@ -1,5 +1,5 @@
 const route = require('express').Router();
-const { runAllTraders, makeNewTrader } = require('../../stock_util/trader');
+const { runAllTraders, makeNewTrader, analyzeAssetsAndBuy } = require('../../stock_util/trader');
 
 route.get('/', (req, res) => {
     res.status(200).send('trader home').end();
@@ -19,6 +19,11 @@ route.post('/make-new', async (req, res) => {
     };
     let newTrader = await makeNewTrader(buyParams, false);
     if (!!newTrader) res.status(200).json(newTrader).end();
+});
+
+route.get('/test-new', (req, res) => {
+    analyzeAssetsAndBuy(10);
+    res.status(200).send('tesdt').end()
 })
 
 module.exports = route;
