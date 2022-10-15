@@ -173,7 +173,7 @@ const reviewTradersSellTargets = async () => {
         let lastTargetAdjust = sellPriceAdjust[sellPriceAdjust.length - 1];
         if (!!lastTargetAdjust && ((unix - lastTargetAdjust) / 1000 / 60 / 60) < 48) continue; //only 1 price adjust per 48 hours
         if (proximity < 0.97) {
-            let targetIncreaseRate = ((1 - proximity)) / 10;
+            let targetIncreaseRate = ((1 - proximity)) / 4; //for every percent below purchase price asset drops we increase sell target by 0.25%
             let targetIncrease = buyPrice * targetIncreaseRate;
             Trader.findOneAndUpdate({ id }, { $push: { sellPriceAdjust: unix }, $inc: { sellPrice: (targetIncrease) }})
                 .then(() => SEND_SMS(`trader ${id} (${traderAsset}) is ${proximity.toFixed(4)} purchase price, has been active for ${traderAge} hours and has therefore had its sell target increased by $${targetIncrease.toFixed(10)} (${(targetIncreaseRate * 100).toFixed(6)}%)`))
