@@ -61,7 +61,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
                 duration
             })
             newSale.save();
-            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${currentPrice}\nPurchase price was ${trader.purchasePrice}`);
+            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
             trader.update({
                 quantity: 0,
                 sellReceipt: res,
