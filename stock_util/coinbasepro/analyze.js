@@ -1,8 +1,9 @@
 require('dotenv').config();
 const axios = require('axios');
 const Analysis = require('../../models/Analysis');
+const Trader = require('../../models/Trader');
 const ccxt = require('ccxt');
-const { idGenerator } = require('../../util');
+const { idGenerator, SEND_SMS } = require('../../util');
 const coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
     apiKey: process.env.CBP3_KEY,
@@ -113,6 +114,7 @@ const buyBool = async (analysis, product_id, currentPrice) => {
 }
 
 const product_ids = require('../../docs/cb_product_id.json');
+const { checkMarketPrice } = require('../../ccxt/coinbasepro');
 
 const analyzeAllAssets = async () => {
     let report = [];
@@ -122,6 +124,63 @@ const analyzeAllAssets = async () => {
         if (bool === true) report.push(analysis);
     }
     console.log(JSON.stringify(report))
+};
+
+const generateAges = (traders, unix) => {
+    let ages = {};
+    for (const trader of traders) {
+        let hoursElapsed = parseFloat(((unix - trader.unix) / 1000 / 60 / 60).toFixed(2));
+        ages[trader.id] = hoursElapsed;
+    };
+    return ages;
+};
+
+const generateAssetsObj = async (assets) => {
+    let assetsObj = {};
+    for (const asset of assets) {
+        let currentPrice = await checkMarketPrice(asset + "/USD");
+        assetsObj[asset] = parseFloat(currentPrice);
+    }
+    return assetsObj;
+}
+
+const reviewTradersSellTargets = async () => {
+    let unix = Date.now();
+    let traders = await Trader.find({});
+    let tradersObj = {};
+    let assets = {};
+    traders.forEach(trader => {
+        tradersObj[trader.id] = trader
+        assets[trader.asset] = true;
+    });
+    assets = Object.keys(assets);
+    assets = await generateAssetsObj(assets);
+
+    let ages = generateAges(traders, unix)
+    let ids = Object.keys(ages);
+
+    for (const id of ids) {
+        let traderAsset = tradersObj[id].asset;
+        let traderAge = ages[id];
+        let buyPrice = tradersObj[id].purchasePrice;
+        let currentPrice = assets[traderAsset];
+        let proximity = currentPrice / buyPrice;
+        let proximityHistory = tradersObj[id].proximityHistory || {};
+        proximityHistory[unix] = proximity;
+        Trader.findOneAndUpdate({ id }, { $set: { proximityHistory } }).catch(err => console.log(err));
+        if (traderAge < 24) continue  //trader must be at least 1 day old before sell target increase
+        let sellPriceAdjust = tradersObj[id].sellPriceAdjust;
+        let lastTargetAdjust = sellPriceAdjust[sellPriceAdjust.length - 1];
+        if (!!lastTargetAdjust && ((unix - lastTargetAdjust) / 1000 / 60 / 60) < 48) continue; //only 1 price adjust per 48 hours
+        if (proximity < 0.97) {
+            let targetIncreaseRate = ((1 - proximity)) / 10;
+            let targetIncrease = buyPrice * targetIncreaseRate;
+            Trader.findOneAndUpdate({ id }, { $push: { sellPriceAdjust: unix }, $inc: { sellPrice: (targetIncrease) }})
+                .then(() => SEND_SMS(`trader ${id} (${traderAsset}) is ${proximity.toFixed(4)} purchase price, has been active for ${traderAge} hours and has therefore had its sell target increased by $${targetIncrease.toFixed(10)} (${(targetIncreaseRate * 100).toFixed(6)}%)`))
+                .catch(err => console.log(err));
+        }
+        
+    }
 }
 
 // analyzeAllAssets()
@@ -129,4 +188,4 @@ const analyzeAllAssets = async () => {
 
 // analyze("ETH-USD");
 
-module.exports = { analyze, buyBool };
+module.exports = { analyze, buyBool, reviewTradersSellTargets };
