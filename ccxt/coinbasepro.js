@@ -33,7 +33,7 @@ const makeCoinbaseSell = async (asset, quantity) => {
 
 const checkMarketPrice = async (ticker) => {
     const price = await coinbasepro.fetchTicker(ticker)
-    console.log(price.info.price);
+    // console.log(price.info.price);
     return price.info.price;
 }
 

@@ -8,7 +8,7 @@ const { analyze, buyBool } = require('./coinbasepro/analyze');
 
 const makeNewTrader = async (buyParams, autoBool) => {
     let [asset, quantity, usd, profitTarget] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget];
-    if (!profitTarget) profitTarget = 1.03;
+    if (!profitTarget) profitTarget = 1.022;
     let id = idGenerator();
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
     if (!!usd) quantity = usd / purchasePrice;
@@ -87,8 +87,6 @@ const runAllTraders = async () => {
         if (currentPrice >= trader.sellPrice) {
             console.log(`sell price met for ${trader.id}`);
             liquidateTrader(trader, currentPrice);
-        } else {
-            console.log(`sell price not met for ${trader.id}`);
         };
     }
     return traders;
