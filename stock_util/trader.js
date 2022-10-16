@@ -116,6 +116,13 @@ const analyzeAssetsAndBuy = async (usdAllowance) => {
             makeNewTrader(buyParams, true);
         }
     }
+};
+
+const reactivateLiquidatedTrader = async (id) => {
+    let liquidatedTrader = await LiquidatedTrader.find({ id });
+    Trader.insertMany(liquidatedTrader[0]).then(() => LiquidatedTrader.findOneAndRemove({ id }).catch(e => console.log(e)));
 }
+
+// reactivateLiquidatedTrader("krGbWxyfiyO6");
 
 module.exports = { makeNewTrader, runAllTraders, analyzeAssetsAndBuy };
