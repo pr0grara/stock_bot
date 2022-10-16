@@ -39,10 +39,9 @@ const makeNewTrader = async (buyParams, autoBool) => {
 }
 
 const liquidateTrader = (trader, soldAtPrice) => {
-    LiquidatedTrader.insertMany(trader)
-        .then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
     CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
         .then(res => {
+            LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
             let purchaseAmnt = trader.quantity * trader.purchasePrice;
             let sellAmnt = trader.quantity * soldAtPrice;
             let profit = sellAmnt - purchaseAmnt;
