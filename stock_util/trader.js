@@ -68,7 +68,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
                 liquidatedAt: Date()
             })
         })
-        .catch(err => console.log(err))
+        .catch(err => console.log(`ERROR MAKING SALE, id: ${trader.id}, attempted soldAtPrice: ${soldAtPrice}, attempted quantity: ${trader.quantity}`, err))
 };
 
 const runAllTraders = async () => {
