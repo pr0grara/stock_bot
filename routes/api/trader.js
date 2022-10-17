@@ -22,6 +22,10 @@ route.post('/make-new', async (req, res) => {
     if (!!newTrader) res.status(200).json(newTrader).end();
 });
 
+route.get('/check', (req, res) => {
+    checkForBuyPositions().then(data => res.status(200).json(data).end()).catch(() => res.status(500).send('error checking for buy positions').end());
+})
+
 route.get('/check-and-buy', (req, res) => {
     checkForBuyPositions().then(data => {
         res.status(200).json(data).end();
