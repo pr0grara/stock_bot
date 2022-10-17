@@ -244,7 +244,7 @@ const updateAsset = async product_id => {
 }
 
 const updateAllAssets = () => {
-    let product_ids = ["ETC-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD"];
+    let product_ids = ["ETH-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD"];
     for (const product_id of product_ids) {
         updateAsset(product_id);
     };
