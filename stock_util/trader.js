@@ -6,8 +6,8 @@ const { idGenerator, SEND_SMS } = require('../util');
 const { analyze, buyBool } = require('./coinbasepro/analyze');
 
 
-const makeNewTrader = async (buyParams, autoBool) => {
-    let [asset, quantity, usd, profitTarget] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget];
+const makeNewTrader = async (buyParams, botBuyBool) => {
+    let [asset, quantity, usd, profitTarget, longPosition] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget, buyParams.longPosition];
     if (!profitTarget) profitTarget = 1.022;
     let id = idGenerator();
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
@@ -16,6 +16,7 @@ const makeNewTrader = async (buyParams, autoBool) => {
     let rebuyPrice = purchasePrice;
     let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
     let allowance = quantity * purchasePrice;
+    let botBuy = !!botBuyBool;
 
     let newTrader = new Trader({
         id,
@@ -26,7 +27,8 @@ const makeNewTrader = async (buyParams, autoBool) => {
         rebuyPrice,
         allowance,
         receipt,
-        botBuy: !!autoBool
+        botBuy,
+        longPosition
     });
 
     newTrader.save()

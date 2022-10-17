@@ -12,6 +12,7 @@ const TraderInstanceSchema = new Schema({
     buyReceipt: { type: Object },
     sellReceipt: { type: Object },
     botBuy: { type: Boolean },
+    longPosition: { type: Boolean },
     proximityHistory: { type: Object },
     sellPriceAdjust: { type: Array },
     date: { type: Date, default: Date() },

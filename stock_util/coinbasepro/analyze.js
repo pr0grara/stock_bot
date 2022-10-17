@@ -394,6 +394,7 @@ const checkForBuyPositions = async () => {
                     profitTarget = 1 - comparative12Mean;
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
+                    buyParams["longPosition"] = true;
                     longPositions.push(buyParams);
                 }
             }
@@ -404,6 +405,7 @@ const checkForBuyPositions = async () => {
                 profitTarget = 1 - comparative12Mean;
                 profitTarget = 1 + profitTarget;
                 buyParams["profitTarget"] = profitTarget;
+                buyParams["longPosition"] = false;
                 shortPositions.push(buyParams)
             }
         }

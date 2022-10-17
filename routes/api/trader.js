@@ -26,13 +26,20 @@ route.get('/check', (req, res) => {
     checkForBuyPositions().then(data => res.status(200).json(data).end()).catch(() => res.status(500).send('error checking for buy positions').end());
 })
 
-route.get('/check-and-buy', (req, res) => {
+route.get('/check-and-buy-long', (req, res) => {
     checkForBuyPositions().then(data => {
         res.status(200).json(data).end();
         if (!data) return;
-        let [shortPositions, longPositions] = [data.shortPositions, data.longPositions];
-
+        let longPositions = data.longPositions;
         longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+    })
+})
+
+route.get('/check-and-buy-short', (req, res) => {
+    checkForBuyPositions().then(data => {
+        res.status(200).json(data).end();
+        if (!data) return;
+        let shortPositions = data.shortPositions;
         shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))
     })
 })
