@@ -274,7 +274,9 @@ const updateAsset = async product_id => {
 }
 
 const updateAllAssets = async () => {
-    let product_ids = ["ETH-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD", "ORCA-USD", "REP-USD", "COMP-USD", "XTZ-USD", "MANA-USD"];
+    // let product_ids = ["ETH-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD", "ORCA-USD", "REP-USD", "COMP-USD", "XTZ-USD", "MANA-USD", "DASH-USD", "PERP-USD"];
+    let assets = await Asset.find({});
+    let product_ids = assets.map(asset => asset.product_id);
     for (const product_id of product_ids) {
         await updateAsset(product_id);
     };
@@ -329,6 +331,7 @@ const deleteAsset = (product_id) => {
 
 // analyze("ETH-USD");
 
+// createAsset("PERP")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("ETH-USD")
