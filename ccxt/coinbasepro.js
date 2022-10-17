@@ -1,7 +1,6 @@
 require('dotenv').config();
 const ccxt = require('ccxt');
 const axios = require('axios');
-const { CREATE_LOOP, idGenerator } = require('../util');
 
 let coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,

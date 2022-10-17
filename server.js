@@ -15,7 +15,7 @@ const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, analyzeAssetsAndBuy } = require('./stock_util/trader');
-const { reviewTradersSellTargets } = require('./stock_util/coinbasepro/analyze');
+const { reviewTradersSellTargets, updateAllAssets } = require('./stock_util/coinbasepro/analyze');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 
@@ -26,5 +26,6 @@ app.get('/', (req, res) => {
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);
 if (config.PROD) CREATE_LOOP(() => reviewTradersSellTargets(), 60);
+if (config.PROD) CREATE_LOOP(() => updateAllAssets(), 60);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
