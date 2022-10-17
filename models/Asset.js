@@ -6,6 +6,7 @@ const AssetSchema = new Schema({
     product_id: { type: String, unique: true },
     lastPrice: { type: Number, required: true },
     history: { type: Object },
+    performance: { type: Object },
     threeDayMean: { type: Number },
     threeDayLow: { type: Number },
     threeDayHigh: { type: Number },

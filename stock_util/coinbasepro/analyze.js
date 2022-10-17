@@ -60,8 +60,7 @@ const deltaHighOrLow = (currentPrice, historicalPrices) => { //are we closer to 
     let lowDelta = 1 - lowRatio; //express delta as a percentage i.e. 1 - 0.95 = 0.05 which means current price is 5% UP from LOWEST price in candle data 
     let highDelta = 1 - highRatio; //i.e. 1 - 1.015 = -0.015 or price is DOWN 1.5% from HIGHEST price in candle data
     //ideally we want a negative lowDelta signifying that the price is below the historical low for candle time period
-    // console.log(lowRatio, highRatio);
-    // console.log(lowDelta, highDelta);
+
     let delta = {
         lowDelta,
         highDelta,
@@ -204,7 +203,7 @@ const generateAssetData = async (product_id) => {
 
     for (const granularity of granularities) {
         let prices = await grabCandleData(product_id, granularity); //60 300 900 3600 21600 86400
-        console.log(prices)
+        // console.log(prices)
         switch (granularity) {
             case 900:
                 threeDayMean = prices.mean;
@@ -232,15 +231,40 @@ const generateAssetData = async (product_id) => {
 }
 
 const updateAsset = async product_id => {
+    var proximity = (target) => {
+        return currentPrice / target;
+    }
+
     let data = await generateAssetData(product_id);
-    let [lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
+    let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
     let unix = Date.now();
     let asset = await Asset.findOne({ product_id });
+    
     let history = asset.history;
-    history[unix] = { "currentPrice": lastPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
+    history[unix] = { currentPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
+    
+    let performance;
+
+    let proxToMean = {
+        three: proximity(threeDayMean),
+        twelve: proximity(twelveDayMean),
+        seventyFive: proximity(seventyFiveDayMean)
+    };
+    let proxToLow = {
+        three: proximity(threeDayLow),
+        twelve: proximity(twelveDayLow),
+        seventyFive: proximity(seventyFiveDayLow)
+    };
+
+    performance = { proxToMean, proxToLow }
+
+    console.log(currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean ,performance);
+
+
     Asset.findOneAndUpdate({ product_id }, {
-        $set: { history, lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh } 
+        $set: { history, performance, lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh } 
     }).catch(err => console.log(err));
+
 }
 
 const updateAllAssets = () => {
@@ -284,6 +308,6 @@ const createAsset = async (ticker) => {
 
 // analyze("ETH-USD");
 
-// updateAsset("ETH-USD")
+updateAllAssets()
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets };
