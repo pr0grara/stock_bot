@@ -392,6 +392,7 @@ const checkForBuyPositions = async () => {
             if ((comparative12Mean) < 0.96) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
                 if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
                     profitTarget = 1 - comparative12Mean;
+                    profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     longPositions.push(buyParams);
                 }
@@ -401,6 +402,7 @@ const checkForBuyPositions = async () => {
         if (lowThree < 1.015) { //filter for assets who are only MAX 1.5% higher than 3 day low
             if (meanTwelve < 0.98) {//filter for assets whose price is MIN 2% down of 12 day mean
                 profitTarget = 1 - comparative12Mean;
+                profitTarget = 1 + profitTarget;
                 buyParams["profitTarget"] = profitTarget;
                 shortPositions.push(buyParams)
             }
@@ -421,6 +423,6 @@ const checkForBuyPositions = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("ETH-USD")
-// checkForBuyPositions();
+checkForBuyPositions();
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
