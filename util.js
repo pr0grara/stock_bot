@@ -47,6 +47,6 @@ const SEND_SMS = (message) => {
             from: "+13158030650",
             to: "+19252553225"
         });
-}
+};
 
 module.exports = {  numPicker, idGenerator, CREATE_LOOP, SEND_SMS };

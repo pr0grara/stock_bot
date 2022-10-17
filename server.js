@@ -28,4 +28,10 @@ if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);
 if (config.PROD) CREATE_LOOP(() => reviewTradersSellTargets(), 60);
 if (config.PROD) CREATE_LOOP(() => updateAllAssets(), 60);
 
+// checkForBuyPositions().then(res => {
+//     let [ shortPositions, longPositions] = [res.shortPositions, res.longPositions ];
+//     longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+//     shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+// })
+
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));

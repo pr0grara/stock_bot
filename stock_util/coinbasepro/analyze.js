@@ -273,10 +273,16 @@ const updateAsset = async product_id => {
 
 }
 
-const updateAllAssets = async () => {
+const grab_all_product_ids = async () => {
     // let product_ids = ["ETH-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD", "ORCA-USD", "REP-USD", "COMP-USD", "XTZ-USD", "MANA-USD", "DASH-USD", "PERP-USD"];
     let assets = await Asset.find({});
     let product_ids = assets.map(asset => asset.product_id);
+    return product_ids;
+}
+
+const updateAllAssets = async () => {
+    let product_ids = await grab_all_product_ids();
+    // console.log(product_ids)
     for (const product_id of product_ids) {
         await updateAsset(product_id);
     };
@@ -326,6 +332,86 @@ const deleteAsset = (product_id) => {
     Asset.findOneAndDelete({ product_id }).catch(err => console.log(err));
 }
 
+const generateMarketAverages = async (product_ids) => {
+    let avgMeanThree = 0;
+    let avgMeanTwelve = 0;
+    let avgMeanSeventyFive = 0;
+    let avgLowThree = 0;
+    let avgLowTwelve = 0;
+    let avgLowSeventyFive = 0;
+    let assetsData ={};
+
+    for (const product_id of product_ids) {
+        let data = await generateAssetData(product_id);
+        assetsData[product_id] = data;
+        // let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
+        let performance = generatePerformance(data);
+        let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];
+        avgMeanThree = avgMeanThree + meanThree;
+        avgMeanTwelve = avgMeanTwelve + meanTwelve;
+        avgMeanSeventyFive = avgMeanSeventyFive + meanSeventyFive;
+        avgLowThree = avgLowThree + lowThree;
+        avgLowTwelve = avgLowTwelve + lowTwelve;
+        avgLowSeventyFive = avgLowSeventyFive + lowSeventyFive;
+    }
+    avgMeanThree = avgMeanThree / product_ids.length;
+    avgMeanTwelve = avgMeanTwelve / product_ids.length;
+    avgMeanSeventyFive = avgMeanSeventyFive / product_ids.length;
+    avgLowThree = avgLowThree / product_ids.length;
+    avgLowTwelve = avgLowTwelve / product_ids.length;
+    avgLowSeventyFive = avgLowSeventyFive / product_ids.length;
+    let marketAverages = { avgMeanThree, avgMeanTwelve, avgMeanSeventyFive, avgLowThree, avgLowTwelve, avgLowSeventyFive };
+    return [marketAverages, assetsData];
+}
+
+const checkForBuyPositions = async () => {
+    let product_ids = await grab_all_product_ids();
+    let results = await generateMarketAverages(product_ids);
+    let [marketAverages, assetsData] = [results[0], results[1]];
+    let longPositions = [];
+    let shortPositions = [];
+    
+    // console.log(marketAverages.avgMeanTwelve)
+
+    for (const product_id of product_ids) {
+        let data = assetsData[product_id];
+        let performance = generatePerformance(data);
+        let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];        
+        let comparative3Mean = meanThree / marketAverages.avgMeanThree;
+        let comparative12Mean = meanTwelve / marketAverages.avgMeanTwelve;
+        let comparative75Mean = meanSeventyFive / marketAverages.avgMeanSeventyFive;
+        let comparative3Low = lowThree / marketAverages.avgLowThree;
+        let comparative12Low = lowTwelve / marketAverages.avgLowTwelve;
+        let comparative75Low = lowSeventyFive / marketAverages.avgLowSeventyFive;
+        performance["comparativeMean"] = [comparative3Mean, comparative12Mean, comparative75Mean];
+        performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
+        let buyParams = { "asset": product_id.split('-')[0], "usd": 10 };
+        let profitTarget = 0.022;
+
+        if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
+            if ((comparative12Mean) < 0.96) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
+                if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
+                    profitTarget = 1 - comparative12Mean;
+                    buyParams["profitTarget"] = profitTarget;
+                    longPositions.push(buyParams);
+                }
+            }
+        }
+
+        if (lowThree < 1.015) { //filter for assets who are only MAX 1.5% higher than 3 day low
+            if (meanTwelve < 0.98) {//filter for assets whose price is MIN 2% down of 12 day mean
+                profitTarget = 1 - comparative12Mean;
+                buyParams["profitTarget"] = profitTarget;
+                shortPositions.push(buyParams)
+            }
+        }
+
+    }
+    if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
+    return false;
+    // console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
+}
+
 // analyzeAllAssets()
 // analyze("SHPING-USD").then(res => console.log(res))
 
@@ -335,5 +421,6 @@ const deleteAsset = (product_id) => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("ETH-USD")
+// checkForBuyPositions();
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };

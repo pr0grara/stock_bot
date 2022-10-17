@@ -1,5 +1,6 @@
 const route = require('express').Router();
 const { runAllTraders, makeNewTrader, analyzeAssetsAndBuy } = require('../../stock_util/trader');
+const { checkForBuyPositions } = require('../../stock_util/coinbasepro/analyze');
 
 route.get('/', (req, res) => {
     res.status(200).send('trader home').end();
@@ -20,6 +21,17 @@ route.post('/make-new', async (req, res) => {
     let newTrader = await makeNewTrader(buyParams, false);
     if (!!newTrader) res.status(200).json(newTrader).end();
 });
+
+route.get('/check-and-buy', (req, res) => {
+    checkForBuyPositions().then(data => {
+        res.status(200).json(data).end();
+        if (!data) return;
+        let [shortPositions, longPositions] = [data.shortPositions, data.longPositions];
+
+        longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+        shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+    })
+})
 
 // route.get('/test-new', (req, res) => {
 //     analyzeAssetsAndBuy(10);
