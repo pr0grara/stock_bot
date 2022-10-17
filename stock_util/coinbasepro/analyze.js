@@ -423,6 +423,6 @@ const checkForBuyPositions = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("ETH-USD")
-checkForBuyPositions();
+// checkForBuyPositions();
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
