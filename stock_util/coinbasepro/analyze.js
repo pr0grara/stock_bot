@@ -406,6 +406,8 @@ const checkForBuyPositions = async () => {
             if (meanTwelve < 0.965) {//filter for assets whose price is MIN 3.5% down of 12 day mean
                 profitTarget = 1 - meanTwelve;
                 profitTarget = 1 + profitTarget;
+                profitTarget = profitTarget * 0.99; //since these are short positions we want to curb profitTarget slightly
+                //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
                 shortPositions.push(buyParams)
