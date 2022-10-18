@@ -16,6 +16,7 @@ const analyzeRoutes = require('./routes/api/analyze');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, analyzeAssetsAndBuy, makeNewTrader } = require('./stock_util/trader');
 const { reviewTradersSellTargets, updateAllAssets, checkForBuyPositions } = require('./stock_util/coinbasepro/analyze');
+const { checkCoinbaseFunds } = require('./ccxt/coinbasepro');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 
@@ -27,15 +28,18 @@ if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 // if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);
 if (config.PROD) CREATE_LOOP(() => reviewTradersSellTargets(), 60);
 if (config.PROD) CREATE_LOOP(() => updateAllAssets(), 60);
-setTimeout(() => {
-    if (config.PROD) CREATE_LOOP(() => {
+setTimeout(async () => {
+    if (config.PROD) CREATE_LOOP(async () => {
+        let funds = await checkCoinbaseFunds()
+        console.log("USD funds: ", funds.USD)
+        if (funds.USD < 40) return;
         checkForBuyPositions()
-        .then(res => {
-            console.log('checked for buy positions')
-            let [ shortPositions, longPositions] = [res.shortPositions, res.longPositions ];
-            longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
-            shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))    
-        })
+            .then(res => {
+                console.log('checked for buy positions')
+                let [ shortPositions, longPositions] = [res.shortPositions, res.longPositions ];
+                longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
+                shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))    
+            })
         .catch(err => console.log(err)) 
     }, 60);
 }, 15000);
