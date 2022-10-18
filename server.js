@@ -35,7 +35,8 @@ setTimeout(() => {
             let [ shortPositions, longPositions] = [res.shortPositions, res.longPositions ];
             longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
             shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))    
-        });
+        })
+        .catch(err => console.log(err)) 
     }, 60);
 }, 15);
 

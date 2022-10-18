@@ -379,6 +379,7 @@ const findLatestTrader = async (product_id, longBool) => {
 }
 
 const checkForBuyPositions = async () => {
+    console.log('checking for buy positions')
     let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(product_ids);
     let [marketAverages, assetsData] = [results[0], results[1]];
