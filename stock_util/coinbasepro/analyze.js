@@ -368,11 +368,21 @@ const findLatestTrader = async (product_id, longBool) => {
     let ticker = product_id.split('-')[0];
     let traders = await Trader.find();
     traders = traders.filter(trader => trader.asset === ticker);
+    // console.log(traders[traders.length-1].id, traders.length)
+
+    let oldest = traders.reduce((acc, trader) => {
+        acc = acc || trader.unix;
+        if (trader.unix > acc.unix) acc = trader;   
+        return acc
+    })
+
+    // console.log(oldest)
 
     while (traders.length > 0) {
         let latestTrader = traders.pop();
         if (longBool === undefined) return latestTrader;
         if (latestTrader.longPosition === longBool) {
+            console.log(product_id, latestTrader.id)
             return latestTrader;
         }
     }
@@ -406,13 +416,15 @@ const checkForBuyPositions = async () => {
 
         //LONG
         if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
-            if (comparative12Mean < 0.96) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
+            if (comparative12Mean < 0.95) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
                 if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
                     let lastTraderOfSameAsset = await findLatestTrader(product_id, true);
+                    // console.log(lastTraderOfSameAsset.id)
                     profitTarget = 1 - comparative12Mean;
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
+                    // console.log((((unix - (lastTraderOfSameAsset.unix * 1000)) / 1000 / 60 / 60)))
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
                     if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) longPositions.push(buyParams);
                 }
@@ -420,8 +432,8 @@ const checkForBuyPositions = async () => {
         }
 
         //SHORT
-        if (lowThree < 1.015) { //filter for assets who are only MAX 1.5% higher than 3 day low
-            if (meanTwelve < 0.965) {//filter for assets whose price is MIN 3.5% down of 12 day mean
+        if (lowThree < 1.0075) { //filter for assets who are only MAX 0.75% higher than 3 day low
+            if (meanTwelve < 0.92) {//filter for assets whose price is MIN 8% down of 12 day mean
                 let lastTraderOfSameAsset = await findLatestTrader(product_id, false);
                 profitTarget = 1 - meanTwelve; //meanTwelve is the expected value asset will return to shortly in this strat
                 profitTarget = 1 + profitTarget;
@@ -429,13 +441,15 @@ const checkForBuyPositions = async () => {
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
+                // console.log((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60, lastTraderOfSameAsset.id)
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
                 if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) shortPositions.push(buyParams);
             }
         }
     }
 
-    console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
+    // console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
+    // console.log("SHORT: ", shortPositions, "LONG: ", longPositions)
     if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
     return false;
 }
@@ -445,11 +459,12 @@ const checkForBuyPositions = async () => {
 
 // analyze("ETH-USD");
 
-// createAsset("AVAX")
+// createAsset("SHIB")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-// checkForBuyPositions();
-// findLatestTrader('COMP-USD').then(res => console.log(res))
+checkForBuyPositions();
+// findLatestTrader('ADA-USD').then(res => console.log(res))
+// findLatestTrader('ADA-USD', false)
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
