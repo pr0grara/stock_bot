@@ -412,7 +412,7 @@ const checkForBuyPositions = async () => {
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
-                    if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 2)) longPositions.push(buyParams);
+                    if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 6)) longPositions.push(buyParams);
                     
                 }
             }
@@ -428,7 +428,7 @@ const checkForBuyPositions = async () => {
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
-                if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 2)) shortPositions.push(buyParams);
+                if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 6)) shortPositions.push(buyParams);
             }
         }
     }
