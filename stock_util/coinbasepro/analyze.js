@@ -368,24 +368,18 @@ const findLatestTrader = async (product_id, longBool) => {
     let ticker = product_id.split('-')[0];
     let traders = await Trader.find();
     traders = traders.filter(trader => trader.asset === ticker);
-    // console.log(traders[traders.length-1].id, traders.length)
 
-    let oldest = traders.reduce((acc, trader) => {
-        acc = acc || trader.unix;
-        if (trader.unix > acc.unix) acc = trader;   
-        return acc
-    })
+    let newestTrader = traders.shift();
 
-    // console.log(oldest)
-
-    while (traders.length > 0) {
-        let latestTrader = traders.pop();
-        if (longBool === undefined) return latestTrader;
-        if (latestTrader.longPosition === longBool) {
-            console.log(product_id, latestTrader.id)
-            return latestTrader;
+    traders.forEach(trader => {
+        if (longBool) {
+            if ((trader.longPosition === longBool) && (trader.unix > newestTrader.unix)) newestTrader = trader;
+        } else {
+            if (trader.unix > newestTrader.unix) newestTrader = trader;
         }
-    }
+    });
+
+    return newestTrader
 }
 
 const checkForBuyPositions = async () => {
@@ -396,8 +390,6 @@ const checkForBuyPositions = async () => {
     let longPositions = [];
     let shortPositions = [];
     
-    // console.log(marketAverages.avgMeanTwelve)
-
     for (const product_id of product_ids) {
         let unix = Date.now()
         let data = assetsData[product_id];
@@ -419,12 +411,10 @@ const checkForBuyPositions = async () => {
             if (comparative12Mean < 0.95) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
                 if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
                     let lastTraderOfSameAsset = await findLatestTrader(product_id, true);
-                    // console.log(lastTraderOfSameAsset.id)
                     profitTarget = 1 - comparative12Mean;
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
-                    // console.log((((unix - (lastTraderOfSameAsset.unix * 1000)) / 1000 / 60 / 60)))
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
                     if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) longPositions.push(buyParams);
                 }
@@ -441,15 +431,14 @@ const checkForBuyPositions = async () => {
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
-                // console.log((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60, lastTraderOfSameAsset.id)
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
                 if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) shortPositions.push(buyParams);
             }
         }
     }
 
-    // console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
     // console.log("SHORT: ", shortPositions, "LONG: ", longPositions)
+    console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
     if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
     return false;
 }
@@ -465,6 +454,6 @@ const checkForBuyPositions = async () => {
 // deleteAsset("AVAX-USD")
 // checkForBuyPositions();
 // findLatestTrader('ADA-USD').then(res => console.log(res))
-// findLatestTrader('ADA-USD', false)
+// findLatestTrader('ADA-USD')
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
