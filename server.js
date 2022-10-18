@@ -38,6 +38,6 @@ setTimeout(() => {
         })
         .catch(err => console.log(err)) 
     }, 60);
-}, 15);
+}, 15000);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
