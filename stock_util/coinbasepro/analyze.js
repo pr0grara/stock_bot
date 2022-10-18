@@ -463,7 +463,7 @@ const checkForBuyPositions = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-checkForBuyPositions();
+// checkForBuyPositions();
 // findLatestTrader('ADA-USD').then(res => console.log(res))
 // findLatestTrader('ADA-USD', false)
 
