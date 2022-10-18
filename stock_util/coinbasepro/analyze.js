@@ -364,6 +364,20 @@ const generateMarketAverages = async (product_ids) => {
     return [marketAverages, assetsData];
 }
 
+const findLatestTrader = async (product_id, longBool) => {
+    let ticker = product_id.split('-')[0];
+    let traders = await Trader.find();
+    traders = traders.filter(trader => trader.asset === ticker);
+
+    while (traders.length > 0) {
+        let latestTrader = traders.pop();
+        if (longBool === undefined) return latestTrader;
+        if (latestTrader.longPosition === longBool) {
+            return latestTrader;
+        }
+    }
+}
+
 const checkForBuyPositions = async () => {
     let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(product_ids);
@@ -374,6 +388,7 @@ const checkForBuyPositions = async () => {
     // console.log(marketAverages.avgMeanTwelve)
 
     for (const product_id of product_ids) {
+        let unix = Date.now()
         let data = assetsData[product_id];
         let performance = generatePerformance(data);
         let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];        
@@ -392,11 +407,13 @@ const checkForBuyPositions = async () => {
         if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
             if (comparative12Mean < 0.96) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
                 if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
+                    let lastTraderOfSameAsset = await findLatestTrader(product_id, true);
                     profitTarget = 1 - comparative12Mean;
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
-                    longPositions.push(buyParams);
+                    if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 2)) longPositions.push(buyParams);
+                    
                 }
             }
         }
@@ -404,13 +421,14 @@ const checkForBuyPositions = async () => {
         //SHORT
         if (lowThree < 1.015) { //filter for assets who are only MAX 1.5% higher than 3 day low
             if (meanTwelve < 0.965) {//filter for assets whose price is MIN 3.5% down of 12 day mean
-                profitTarget = 1 - meanTwelve;
+                let lastTraderOfSameAsset = await findLatestTrader(product_id, false);
+                profitTarget = 1 - meanTwelve; //meanTwelve is the expected value asset will return to shortly in this strat
                 profitTarget = 1 + profitTarget;
                 profitTarget = profitTarget * 0.99; //since these are short positions we want to curb profitTarget slightly
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
-                shortPositions.push(buyParams)
+                if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) < 2)) shortPositions.push(buyParams);
             }
         }
     }
@@ -429,6 +447,7 @@ const checkForBuyPositions = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-// checkForBuyPositions();
+checkForBuyPositions();
+// findLatestTrader('COMP-USD').then(res => console.log(res))
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
