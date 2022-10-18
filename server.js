@@ -15,7 +15,7 @@ const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, analyzeAssetsAndBuy } = require('./stock_util/trader');
-const { reviewTradersSellTargets, updateAllAssets } = require('./stock_util/coinbasepro/analyze');
+const { reviewTradersSellTargets, updateAllAssets, checkForBuyPositions } = require('./stock_util/coinbasepro/analyze');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 
