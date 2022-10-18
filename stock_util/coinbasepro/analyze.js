@@ -447,7 +447,7 @@ const checkForBuyPositions = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-checkForBuyPositions();
+// checkForBuyPositions();
 // findLatestTrader('COMP-USD').then(res => console.log(res))
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
