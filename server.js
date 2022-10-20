@@ -14,9 +14,8 @@ app.use(express.json());
 const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
 const { CREATE_LOOP } = require('./util');
-const { runAllTraders, analyzeAssetsAndBuy, makeNewTrader } = require('./stock_util/trader');
-const { reviewTradersSellTargets, updateAllAssets, checkForBuyPositions } = require('./stock_util/coinbasepro/analyze');
-const { checkCoinbaseFunds } = require('./ccxt/coinbasepro');
+const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
+const { reviewTradersSellTargets, updateAllAssets, buyPositions } = require('./stock_util/coinbasepro/analyze');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 
@@ -26,22 +25,10 @@ app.get('/', (req, res) => {
 
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 // if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);
-if (config.PROD) CREATE_LOOP(() => reviewTradersSellTargets(), 60);
-if (config.PROD) CREATE_LOOP(() => updateAllAssets(), 60);
-setTimeout(async () => {
-    if (config.PROD) CREATE_LOOP(async () => {
-        let funds = await checkCoinbaseFunds()
-        console.log("USD funds: ", funds.USD)
-        if (funds.USD < 40) return;
-        checkForBuyPositions()
-            .then(res => {
-                console.log('checked for buy positions')
-                let [ shortPositions, longPositions] = [res.shortPositions, res.longPositions ];
-                longPositions.forEach(buyParams => makeNewTrader(buyParams, true))
-                shortPositions.forEach(buyParams => makeNewTrader(buyParams, true))    
-            })
-        .catch(err => console.log(err)) 
-    }, 60);
-}, 15000);
+if (config.PROD) CREATE_LOOP(async () => {
+    await reviewTradersSellTargets()
+    await updateAllAssets()
+    await buyPositions(makeNewTrader);
+}, 90);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));

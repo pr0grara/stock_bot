@@ -5,7 +5,7 @@ const Trader = require('../../models/Trader');
 const Asset = require('../../models/Asset');
 const ccxt = require('ccxt');
 const product_ids = require('../../docs/cb_product_id.json');
-const { checkMarketPrice } = require('../../ccxt/coinbasepro');
+const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro');
 const { idGenerator, SEND_SMS } = require('../../util');
 const coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
@@ -403,12 +403,12 @@ const checkForBuyPositions = async () => {
         let comparative75Low = lowSeventyFive / marketAverages.avgLowSeventyFive;
         performance["comparativeMean"] = [comparative3Mean, comparative12Mean, comparative75Mean];
         performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
-        let buyParams = { "asset": product_id.split('-')[0], "usd": 10 };
+        let buyParams = { "asset": product_id.split('-')[0], "usd": 5 };
         let profitTarget = 0.022;
 
         //LONG
         if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
-            if (comparative12Mean < 0.95) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
+            if (comparative12Mean < 0.92) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
                 if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
                     let lastTraderOfSameAsset = await findLatestTrader(product_id, true);
                     profitTarget = 1 - comparative12Mean;
@@ -441,7 +441,18 @@ const checkForBuyPositions = async () => {
     console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
     if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
     return false;
-}
+};
+
+const buyPositions = async (makeNewTrader) => {
+    let funds = await checkCoinbaseFunds();
+    console.log("USD funds: ", funds.USD)
+    if (funds.USD < 100) return;
+    let positions = await checkForBuyPositions()
+    if (!positions) return;
+    let [shortPositions, longPositions] = [positions.shortPositions, positions.longPositions];
+    for (const buyParams of longPositions) await makeNewTrader(buyParams, true);
+    for (const buyParams of shortPositions) await makeNewTrader(buyParams, true);
+};
 
 // analyzeAllAssets()
 // analyze("SHPING-USD").then(res => console.log(res))
@@ -453,7 +464,8 @@ const checkForBuyPositions = async () => {
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
 // checkForBuyPositions();
+// buyPositions()
 // findLatestTrader('ADA-USD').then(res => console.log(res))
 // findLatestTrader('ADA-USD')
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions };
