@@ -373,9 +373,9 @@ const findLatestTrader = async (product_id, longBool) => {
 
     traders.forEach(trader => {
         if (longBool) {
-            if ((trader.longPosition === longBool) && (trader.unix > newestTrader.unix)) newestTrader = trader;
+            if ((trader.longPosition === longBool) && (trader.unix >= newestTrader.unix)) newestTrader = trader;
         } else {
-            if (trader.unix > newestTrader.unix) newestTrader = trader;
+            if (trader.unix >= newestTrader.unix) newestTrader = trader;
         }
     });
 
@@ -465,7 +465,7 @@ const buyPositions = async (makeNewTrader) => {
 // deleteAsset("AVAX-USD")
 // checkForBuyPositions();
 // buyPositions()
-// findLatestTrader('ADA-USD').then(res => console.log(res))
-// findLatestTrader('ADA-USD')
+// findLatestTrader('KNC-USD').then(res => console.log(res))
+// findLatestTrader('KNC-USD')
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions };
