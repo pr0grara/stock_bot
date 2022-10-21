@@ -21,7 +21,7 @@ const getCoinbaseBalances = async (symbol) => {
 
 const makeCoinbaseBuy = async (asset, quantity) => {
     let buyOrder = await coinbasepro.createOrder(asset, "market", "buy", quantity)
-    console.log(buyOrder)
+    // console.log(buyOrder)
     return buyOrder;
 }
 
