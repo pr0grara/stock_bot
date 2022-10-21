@@ -469,7 +469,7 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
-    if (funds.USD < 100) return console.log(`buys canceled due to insifficient funds USD: $${funds.USD}. $100 min.`);
+    if (funds.USD < 50) return console.log(`buys canceled due to insifficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions()
     if (!positions) return;
     let [shortPositions, longPositions] = [positions.shortPositions, positions.longPositions];
