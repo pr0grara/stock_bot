@@ -486,7 +486,7 @@ const buyPositions = async (makeNewTrader) => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-checkForBuyPositions();
+// checkForBuyPositions();
 // buyPositions()
 // findLatestTrader('BTC-USD').then(res => console.log(res))
 // findLatestTrader('KNC-USD')
