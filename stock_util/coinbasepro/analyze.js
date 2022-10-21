@@ -393,6 +393,7 @@ const checkForBuyPositions = async () => {
     for (const product_id of product_ids) {
         let unix = Date.now()
         let data = assetsData[product_id];
+        let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
         let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];        
         let comparative3Mean = meanThree / marketAverages.avgMeanThree;
@@ -418,7 +419,7 @@ const checkForBuyPositions = async () => {
 
                     let msSinceLastTrade = 0.0;
                     let hoursSinceLastTrade = 0.0;
-                    let priceDelta = assetsData.currentPrice / lastTraderOfSameAsset.purchasePrice;
+                    let priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
 
                     try {
                         msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
@@ -427,8 +428,9 @@ const checkForBuyPositions = async () => {
 
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
                     if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
-                        if (priceDelta < 0.95 || hoursSinceLastTrade > 24) {
-                            console.log(`all criteria for long postions strategy met for ${product_id.split('-')[0]}`)
+                        if (priceDelta < 0.95 || hoursSinceLastTrade > 48) {
+                            console.log(`all criteria for long positions strategy met for ${product_id.split('-')[0]}:`)
+                            console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
                             longPositions.push(buyParams);
                         }
                     };
@@ -448,7 +450,7 @@ const checkForBuyPositions = async () => {
                 buyParams["longPosition"] = false;
                 let msSinceLastTrade = 0.0;
                 let hoursSinceLastTrade = 0.0;
-                let priceDelta = assetsData.currentPrice / lastTraderOfSameAsset.purchasePrice;
+                let priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
                 
                 try {
                     msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
@@ -457,8 +459,9 @@ const checkForBuyPositions = async () => {
 
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
                 if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
-                    if (priceDelta < 0.95 || hoursSinceLastTrade > 24) {
-                        console.log(`all criteria for long postions strategy met for ${product_id.split('-')[0]}`)
+                    if (priceDelta < 0.95 || hoursSinceLastTrade > 48) {
+                        console.log(`all criteria for short position strategy met for ${product_id.split('-')[0]}:`)
+                        console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
                         shortPositions.push(buyParams);
                     }
                 };
@@ -466,8 +469,6 @@ const checkForBuyPositions = async () => {
         }
     }
 
-    // console.log("SHORT: ", shortPositions, "LONG: ", longPositions)
-    console.log("SHORT: ", JSON.stringify(shortPositions), "LONG: ", JSON.stringify(longPositions))
     if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
     return false;
 };
@@ -493,7 +494,8 @@ const buyPositions = async (makeNewTrader) => {
 // deleteAsset("AVAX-USD")
 // checkForBuyPositions();
 // buyPositions()
-// findLatestTrader('KNC-USD').then(res => console.log(res))
+// findLatestTrader('BTC-USD').then(res => console.log(res))
 // findLatestTrader('KNC-USD')
+// testStrategy("KNC-USD")
 
 module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions };
