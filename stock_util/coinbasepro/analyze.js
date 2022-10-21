@@ -464,6 +464,7 @@ const checkForBuyPositions = async () => {
     }
 
     if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
+    console.log("no buy positions found");
     return false;
 };
 
