@@ -28,7 +28,8 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
         allowance,
         receipt,
         botBuy,
-        longPosition
+        longPosition,
+        unix: Date.now()
     });
 
     newTrader.save()
