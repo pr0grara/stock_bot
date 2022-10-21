@@ -339,7 +339,7 @@ const generateMarketAverages = async (product_ids) => {
     let avgLowThree = 0;
     let avgLowTwelve = 0;
     let avgLowSeventyFive = 0;
-    let assetsData ={};
+    let assetsData = {};
 
     for (const product_id of product_ids) {
         let data = await generateAssetData(product_id);
@@ -415,8 +415,23 @@ const checkForBuyPositions = async () => {
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
+
+                    let msSinceLastTrade = 0.0;
+                    let hoursSinceLastTrade = 0.0;
+                    let priceDelta = assetsData.currentPrice / lastTraderOfSameAsset.purchasePrice;
+
+                    try {
+                        msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
+                        hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
+                    } catch (e) { };
+
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
-                    if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) longPositions.push(buyParams);
+                    if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
+                        if (priceDelta < 0.95 || hoursSinceLastTrade > 24) {
+                            console.log(`all criteria for long postions strategy met for ${product_id.split('-')[0]}`)
+                            longPositions.push(buyParams);
+                        }
+                    };
                 }
             }
         }
@@ -431,8 +446,22 @@ const checkForBuyPositions = async () => {
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
+                let msSinceLastTrade = 0.0;
+                let hoursSinceLastTrade = 0.0;
+                let priceDelta = assetsData.currentPrice / lastTraderOfSameAsset.purchasePrice;
+                
+                try {
+                    msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
+                    hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
+                } catch (e) { };
+
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
-                if ((!!lastTraderOfSameAsset) && (((unix - lastTraderOfSameAsset.unix) / 1000 / 60 / 60) > 6)) shortPositions.push(buyParams);
+                if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
+                    if (priceDelta < 0.95 || hoursSinceLastTrade > 24) {
+                        console.log(`all criteria for long postions strategy met for ${product_id.split('-')[0]}`)
+                        shortPositions.push(buyParams);
+                    }
+                };
             }
         }
     }
