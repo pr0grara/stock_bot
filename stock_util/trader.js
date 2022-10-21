@@ -92,7 +92,8 @@ const runAllTraders = async () => {
             liquidateTrader(trader, currentPrice);
         };
 
-        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice }}).then(console.log(trader.id, " currentPrice updated"));
+        let proximity = currentPrice / trader.sellPrice
+        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice, proximity }});
     }
     return traders;
 };
