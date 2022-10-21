@@ -92,7 +92,7 @@ const runAllTraders = async () => {
             liquidateTrader(trader, currentPrice);
         };
 
-        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice }});
+        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice }}).then(console.log(trader.id, " currentPrice updated"));
     }
     return traders;
 };
