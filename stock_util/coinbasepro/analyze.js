@@ -406,6 +406,17 @@ const checkForBuyPositions = async () => {
         performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
         let buyParams = { "asset": product_id.split('-')[0], "usd": 5 };
         let profitTarget = 0.022;
+        
+        let lastTraderOfSameAsset = await findLatestTrader(product_id);
+        let msSinceLastTrade = 0.0;
+        let hoursSinceLastTrade = 0.0;
+        let priceDelta = 1.0;
+        try {
+            msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
+            hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
+            priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
+        } catch (e) { };
+
 
         //LONG
         if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
@@ -416,15 +427,6 @@ const checkForBuyPositions = async () => {
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
-
-                    let msSinceLastTrade = 0.0;
-                    let hoursSinceLastTrade = 0.0;
-                    let priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
-
-                    try {
-                        msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
-                        hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
-                    } catch (e) { };
 
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
                     if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
@@ -444,18 +446,10 @@ const checkForBuyPositions = async () => {
                 let lastTraderOfSameAsset = await findLatestTrader(product_id, false);
                 profitTarget = 1 - meanTwelve; //meanTwelve is the expected value asset will return to shortly in this strat
                 profitTarget = 1 + profitTarget;
-                profitTarget = profitTarget * 0.99; //since these are short positions we want to curb profitTarget slightly
+                profitTarget = profitTarget * 0.98; //since these are short positions we want to curb profitTarget slightly
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
-                let msSinceLastTrade = 0.0;
-                let hoursSinceLastTrade = 0.0;
-                let priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
-                
-                try {
-                    msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
-                    hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
-                } catch (e) { };
 
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
                 if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
@@ -492,7 +486,7 @@ const buyPositions = async (makeNewTrader) => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-// checkForBuyPositions();
+checkForBuyPositions();
 // buyPositions()
 // findLatestTrader('BTC-USD').then(res => console.log(res))
 // findLatestTrader('KNC-USD')
