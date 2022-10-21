@@ -28,7 +28,7 @@ if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(async () => {
     await reviewTradersSellTargets()
     await updateAllAssets()
-    await buyPositions(makeNewTrader);
+    // await buyPositions(makeNewTrader);
 }, 90);
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
