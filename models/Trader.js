@@ -19,6 +19,7 @@ const TraderInstanceSchema = new Schema({
     sellPriceAdjust: { type: Array },
     date: { type: Date },
     unix: { type: Number },
+    age: { type: Number },
     liquidatedAt: { type: Date }
 })
 

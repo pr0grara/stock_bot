@@ -77,6 +77,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
 const runAllTraders = async () => {
     let traders = await Trader.find({});
     let prices = {};
+    let unix = Date.now();
     
     for (const trader of traders) {
         let currentPrice;
@@ -92,8 +93,9 @@ const runAllTraders = async () => {
             liquidateTrader(trader, currentPrice);
         };
 
+        let age = ((unix - trader.unix) / 1000 / 60 / 60).toFixed(2);
         let proximity = currentPrice / trader.sellPrice;
-        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice, proximity }}).catch(() => {});
+        Trader.findOneAndUpdate({ id: trader.id }, { $set: { currentPrice, proximity, age }}).catch(() => {});
     }
     return traders;
 };
