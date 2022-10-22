@@ -427,10 +427,10 @@ const checkForBuyPositions = async () => {
                     profitTarget = 1 + profitTarget;
                     buyParams["profitTarget"] = profitTarget;
                     buyParams["longPosition"] = true;
-
+                    // console.log(buyParams, priceDelta, hoursSinceLastTrade);
                     if (!lastTraderOfSameAsset) longPositions.push(buyParams);
-                    if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
-                        if (priceDelta < 0.95 || hoursSinceLastTrade > 48) {
+                    if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
+                        if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
                             console.log(`all criteria for long positions strategy met for ${product_id.split('-')[0]}:`)
                             console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
                             longPositions.push(buyParams);
@@ -450,10 +450,10 @@ const checkForBuyPositions = async () => {
                 //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["longPosition"] = false;
-
+                // console.log(buyParams, priceDelta, hoursSinceLastTrade);
                 if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
-                if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 6)) {
-                    if (priceDelta < 0.95 || hoursSinceLastTrade > 48) {
+                if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
+                    if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
                         console.log(`all criteria for short position strategy met for ${product_id.split('-')[0]}:`)
                         console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
                         shortPositions.push(buyParams);
@@ -470,7 +470,7 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
-    if (funds.USD < 50) return console.log(`buys canceled due to insifficient funds USD: $${funds.USD}. $100 min.`);
+    if (funds.USD < 50) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions()
     if (!positions) return;
     let [shortPositions, longPositions] = [positions.shortPositions, positions.longPositions];
