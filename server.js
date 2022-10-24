@@ -13,15 +13,18 @@ app.use(express.json());
 
 const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
+const authorizeRoutes = require('./routes/api/authorize');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
 const { reviewTradersSellTargets, updateAllAssets, buyPositions } = require('./stock_util/coinbasepro/analyze');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
+app.use('/api/authenticate', authorizeRoutes);
 
 app.get('/', (req, res) => {
     res.send('stockbot home')
 });
+
 
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 // if (config.PROD) CREATE_LOOP(() => analyzeAssetsAndBuy(10), .95);

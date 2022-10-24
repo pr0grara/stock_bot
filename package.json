@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.27.2",
+    "bcrypt": "^5.1.0",
     "ccxt": "^1.93.101",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.2",
