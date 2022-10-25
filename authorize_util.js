@@ -1,7 +1,11 @@
 const { SEND_SMS, idGenerator } = require("./util");
 const Authorization = require('./models/Authorization');
 
-const createAuthorization = async (id) => {
+const generateTwoFactorCode = () => {
+}
+
+const createAuthorization = async () => {
+    let id = idGenerator(14);
     let newAuthorization = new Authorization({
         id,
         mfa: false,
@@ -19,9 +23,9 @@ const fetchAndAuthorize = async (id) => {
 }
 
 const validateNewToken = async () => {
-    let id = idGenerator(14);
+    let mfa_code = idGenerator(4, true);
     let recordCreatedBool = await createAuthorization();
-    if (recordCreatedBool) SEND_SMS("Authorize New Token? 1=YES 0=NO");
+    if (recordCreatedBool) SEND_SMS(`MFA Code for New Token: ${mfa_code}`);
     fetchAndAuthorize();
 }
 

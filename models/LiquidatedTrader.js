@@ -11,7 +11,15 @@ const TraderInstanceSchema = new Schema({
     allowance: { type: Number },
     buyReceipt: { type: Object },
     sellReceipt: { type: Object },
-    date: { type: Date, default: Date() },
+    botBuy: { type: Boolean },
+    longPosition: { type: Boolean },
+    currentPrice: { type: Number },
+    proximity: { type: Number },
+    proximityHistory: { type: Object },
+    sellPriceAdjust: { type: Array },
+    date: { type: Date },
+    unix: { type: Number },
+    age: { type: Number },
     liquidatedAt: { type: Date }
 })
 
