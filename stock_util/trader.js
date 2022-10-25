@@ -60,16 +60,10 @@ const liquidateTrader = (trader, soldAtPrice) => {
                 quantity: trader.quantity,
                 purchasePrice: trader.purchasePrice,
                 sellPrice: soldAtPrice,
-                botBuy: trader.botBuy,
-                longPosition: trader.longPosition,
-                proximityHistory: trader.proximityHistory,
-                sellPriceAdjust: trader.sellPriceAdjust,
-                unix: trader.unix,
-                age: trader.age,
                 profit,
                 duration
             })
-            newSale.save().catch(e=>console.log(e));
+            newSale.save();
             SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
             trader.update({
                 quantity: 0,

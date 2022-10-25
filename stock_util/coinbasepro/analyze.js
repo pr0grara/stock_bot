@@ -404,7 +404,7 @@ const checkForBuyPositions = async () => {
         let comparative75Low = lowSeventyFive / marketAverages.avgLowSeventyFive;
         performance["comparativeMean"] = [comparative3Mean, comparative12Mean, comparative75Mean];
         performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
-        let buyParams = { "asset": product_id.split('-')[0], "usd": 5 };
+        let buyParams = { "asset": product_id.split('-')[0], "usd": 15 };
         let profitTarget = 0.022;
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
@@ -470,7 +470,7 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
-    if (funds.USD < 50) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $50 min.`);
+    if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions()
     if (!positions) return;
     let [shortPositions, longPositions] = [positions.shortPositions, positions.longPositions];
