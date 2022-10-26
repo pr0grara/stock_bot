@@ -402,7 +402,6 @@ const checkForBuyPositions = async () => {
     let positions = [];
     
     for (const product_id of product_ids) {
-        let unix = Date.now()
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
