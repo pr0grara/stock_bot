@@ -431,7 +431,8 @@ const checkForBuyPositions = async () => {
             product_id === "PERP-USD" ||
             product_id === "ORCA-USD" ||
             product_id === "SHIB-USD" ||
-            product_id === "AVAX-USD") {
+            product_id === "AVAX-USD" ||
+            product_id === "AAVE-USD") {
             let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
             buyParams["profitTarget"] = profitTarget;
             if (!!profitTarget) positions.push(buyParams);
@@ -456,7 +457,7 @@ const buyPositions = async (makeNewTrader) => {
 // analyze("SHPING-USD").then(res => console.log(res))
 
 // analyze("ETH-USD");
-// createAsset("XLM")
+// createAsset("AAVE")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")

@@ -1,34 +1,54 @@
 const { SEND_SMS, idGenerator } = require("./util");
 const Authorization = require('./models/Authorization');
+const bcrypt = require('bcrypt');
 
 const generateTwoFactorCode = () => {
 }
 
-const createAuthorization = async () => {
-    let id = idGenerator(14);
+const createAuthorization = async (mfa_code) => {
+    let token = idGenerator(14);
+    // let hash = await bcrypt.hash(token, 5);
     let newAuthorization = new Authorization({
-        id,
-        mfa: false,
+        token,
+        // hash,
+        authorized: false,
+        mfa_code,
         unix: Date.now(),
         date: Date()
     });
-    let recordCreatedBool = !!(await newAuthorization.save().catch(e => {}));
-    return recordCreatedBool;
-}
+    let recordCreatedBool = !!(await newAuthorization.save());
+    return [token, recordCreatedBool];
+};
 
-const fetchAndAuthorize = async (id) => {
-    let authorization = await Authorization.findOne({ id });
-
-    console.log(authorization)
-}
-
-const validateNewToken = async () => {
+const MFA = async () => {
     let mfa_code = idGenerator(4, true);
-    let recordCreatedBool = await createAuthorization();
+    let [token, recordCreatedBool] = await createAuthorization(mfa_code);
+    console.log(recordCreatedBool);
     if (recordCreatedBool) SEND_SMS(`MFA Code for New Token: ${mfa_code}`);
-    fetchAndAuthorize();
-}
+    return token;
+};
 
-// createAuthorization("1234")
+const authenticateToken = async (token, mfa_code) => {
+    let authentication = await Authorization.findOne({ token });
+    console.log(authentication.mfa_code === mfa_code)
+    if (!authentication) return false;
+    if (authentication.mfa_code === mfa_code) {
+        authentication.updateOne({ $set: {authorized: true} }).then(() => console.log('updated auth record')).catch(e=>console.log(e));
+        return true;
+    };
+    return false;
+};
 
-module.exports = { validateNewToken }
+const cleanTokens = async () => {
+    let authentications = await Authorization.find({});
+    let unix = Date.now();
+    
+    let unvalidated = authentications.filter(record => !record.authorized);
+    for (const record of unvalidated) if ((unix - record.unix) / 1000 / 60 > 5) record.deleteOne({});
+
+    let validated = authentications.filter(record => !!record.authorized);
+    for (const record of validated) if ((unix - record.unix) / 1000 / 60 / 60 / 24 > 10) record.deleteOne({});
+
+};
+
+module.exports = { MFA, authenticateToken, cleanTokens }
