@@ -17,6 +17,7 @@ const authorizeRoutes = require('./routes/api/authorize');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
 const { reviewTradersSellTargets, updateAllAssets, buyPositions } = require('./stock_util/coinbasepro/analyze');
+const { generateComprehensiveAnalysis } = require('./stock_util/coinbasepro/strategies');
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api/authenticate', authorizeRoutes);

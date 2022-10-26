@@ -6,7 +6,9 @@ const Asset = require('../../models/Asset');
 const ccxt = require('ccxt');
 const product_ids = require('../../docs/cb_product_id.json');
 const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro');
+// const { BTC_STRAT } = require('./strategies');
 const { idGenerator, SEND_SMS } = require('../../util');
+const { STRAT_1, STRAT_2 } = require('./strategies');
 const coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
     apiKey: process.env.CBP3_KEY,
@@ -278,7 +280,12 @@ const grab_all_product_ids = async () => {
     let assets = await Asset.find({});
     let product_ids = assets.map(asset => asset.product_id);
     return product_ids;
-}
+};
+
+const grab_all_assets = async () => {
+    let assets = await Asset.find({});
+    return assets;
+};
 
 const updateAllAssets = async () => {
     let product_ids = await grab_all_product_ids();
@@ -328,6 +335,10 @@ const createAllAssets = () => {
     };
 };
 
+const addItemToAsset = async (ticker, item) => {
+    Asset.findOneAndUpdate({ ticker }, { $set: { strategy: item } }).then(() => console.log('added item')).catch(err => console.log(err))
+};
+
 const deleteAsset = (product_id) => {
     Asset.findOneAndDelete({ product_id }).catch(err => console.log(err));
 }
@@ -368,6 +379,7 @@ const findLatestTrader = async (product_id, longBool) => {
     let ticker = product_id.split('-')[0];
     let traders = await Trader.find();
     traders = traders.filter(trader => trader.asset === ticker);
+    if (traders.length < 1) return;
 
     let newestTrader = traders.shift();
 
@@ -387,83 +399,48 @@ const checkForBuyPositions = async () => {
     let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(product_ids);
     let [marketAverages, assetsData] = [results[0], results[1]];
-    let longPositions = [];
-    let shortPositions = [];
+    let positions = [];
     
     for (const product_id of product_ids) {
         let unix = Date.now()
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
-        let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];        
-        let comparative3Mean = meanThree / marketAverages.avgMeanThree;
-        let comparative12Mean = meanTwelve / marketAverages.avgMeanTwelve;
-        let comparative75Mean = meanSeventyFive / marketAverages.avgMeanSeventyFive;
-        let comparative3Low = lowThree / marketAverages.avgLowThree;
-        let comparative12Low = lowTwelve / marketAverages.avgLowTwelve;
-        let comparative75Low = lowSeventyFive / marketAverages.avgLowSeventyFive;
-        performance["comparativeMean"] = [comparative3Mean, comparative12Mean, comparative75Mean];
-        performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
         let buyParams = { "asset": product_id.split('-')[0], "usd": 15 };
-        let profitTarget = 0.022;
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
-        let msSinceLastTrade = 0.0;
-        let hoursSinceLastTrade = 0.0;
-        let priceDelta = 1.0;
-        try {
-            msSinceLastTrade = unix - lastTraderOfSameAsset.unix;
-            hoursSinceLastTrade = msSinceLastTrade / 1000 / 60 / 60;
-            priceDelta = currentPrice / lastTraderOfSameAsset.purchasePrice;
-        } catch (e) { };
 
+        if (product_id === "ETH-USD" ||
+            product_id === "BTC-USD" ||
+            product_id === "MANA-USD" ||
+            product_id === "DOGE-USD" ||
+            product_id === "COMP-USD" || 
+            product_id === "XTZ-USD" || 
+            product_id === "LTC-USD" || 
+            product_id === "REP-USD" || 
+            product_id === "MKR-USD") {
+            let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+            buyParams["profitTarget"] = profitTarget;
+            if (!!profitTarget) positions.push(buyParams);
+            continue;
+        };
 
-        //LONG
-        if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
-            if (comparative12Mean < 0.92) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
-                if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
-                    let lastTraderOfSameAsset = await findLatestTrader(product_id, true);
-                    profitTarget = 1 - comparative12Mean;
-                    profitTarget = 1 + profitTarget;
-                    buyParams["profitTarget"] = profitTarget;
-                    buyParams["longPosition"] = true;
-                    // console.log(buyParams, priceDelta, hoursSinceLastTrade);
-                    if (!lastTraderOfSameAsset) longPositions.push(buyParams);
-                    if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
-                        if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
-                            console.log(`all criteria for long positions strategy met for ${product_id.split('-')[0]}:`)
-                            console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
-                            longPositions.push(buyParams);
-                        }
-                    };
-                }
-            }
-        }
+        if (product_id === "DASH-USD" ||
+            product_id === "DOT-USD" ||
+            product_id === "KNC-USD" ||
+            product_id === "ADA-USD" ||
+            product_id === "PERP-USD" ||
+            product_id === "ORCA-USD" ||
+            product_id === "SHIB-USD" ||
+            product_id === "AVAX-USD") {
+            let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+            buyParams["profitTarget"] = profitTarget;
+            if (!!profitTarget) positions.push(buyParams);
+            continue;
+        };
+    };
 
-        //SHORT
-        if (lowThree < 1.0075) { //filter for assets who are only MAX 0.75% higher than 3 day low
-            if (meanTwelve < 0.92) {//filter for assets whose price is MIN 8% down of 12 day mean
-                let lastTraderOfSameAsset = await findLatestTrader(product_id, false);
-                profitTarget = 1 - meanTwelve; //meanTwelve is the expected value asset will return to shortly in this strat
-                profitTarget = 1 + profitTarget;
-                profitTarget = profitTarget * 0.98; //since these are short positions we want to curb profitTarget slightly
-                //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
-                buyParams["profitTarget"] = profitTarget;
-                buyParams["longPosition"] = false;
-                // console.log(buyParams, priceDelta, hoursSinceLastTrade);
-                if (!lastTraderOfSameAsset) shortPositions.push(buyParams);
-                if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
-                    if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
-                        console.log(`all criteria for short position strategy met for ${product_id.split('-')[0]}:`)
-                        console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
-                        shortPositions.push(buyParams);
-                    }
-                };
-            }
-        }
-    }
-
-    if (shortPositions.length > 0 || longPositions.length > 0) return { shortPositions, longPositions };
+    if (positions.length > 0) return positions;
     console.log("no buy positions found");
     return false;
 };
@@ -471,26 +448,77 @@ const checkForBuyPositions = async () => {
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
     if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
-    let positions = await checkForBuyPositions()
+    let positions = await checkForBuyPositions();
     if (!positions) return;
-    let [shortPositions, longPositions] = [positions.shortPositions, positions.longPositions];
-    for (const buyParams of longPositions) await makeNewTrader(buyParams, true);
-    for (const buyParams of shortPositions) await makeNewTrader(buyParams, true);
+    for (const buyParams of positions) await makeNewTrader(buyParams);
 };
 
 // analyzeAllAssets()
 // analyze("SHPING-USD").then(res => console.log(res))
 
 // analyze("ETH-USD");
-
-// createAsset("SHIB")
+// createAsset("XLM")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
 // checkForBuyPositions();
+// checkForBuyPositions().then(res => console.log(res));
 // buyPositions()
 // findLatestTrader('BTC-USD').then(res => console.log(res))
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader };
+
+//DEPRECATED ORIGINAL STRATEGIES
+// let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];
+// let comparative3Mean = meanThree / marketAverages.avgMeanThree;
+// let comparative12Mean = meanTwelve / marketAverages.avgMeanTwelve;
+// let comparative75Mean = meanSeventyFive / marketAverages.avgMeanSeventyFive;
+// let comparative3Low = lowThree / marketAverages.avgLowThree;
+// let comparative12Low = lowTwelve / marketAverages.avgLowTwelve;
+// let comparative75Low = lowSeventyFive / marketAverages.avgLowSeventyFive;
+// performance["comparativeMean"] = [comparative3Mean, comparative12Mean, comparative75Mean];
+// performance["comparativeLow"] = [comparative3Low, comparative12Low, comparative75Low];
+    //LONG
+//     if (meanTwelve < marketAverages.avgMeanTwelve) { //filter for assets performing below the average mean of their peers over ~12 days
+//         if (comparative12Mean < 0.92) { //filter for assets performing significantly poorly compared to the average mean over ~12 days
+//             if (meanSeventyFive < 0.9 && (meanSeventyFive < meanTwelve)) { //make sure assets 75 day mean is lower than assets 12 day mean to ensure good long
+//                 profitTarget = 1 - comparative12Mean;
+//                 profitTarget = 1 + profitTarget;
+//                 buyParams["profitTarget"] = profitTarget;
+//                 buyParams["longPosition"] = true;
+//                 // console.log(buyParams, priceDelta, hoursSinceLastTrade);
+//                 if (!lastTraderOfSameAsset) positions.push(buyParams);
+//                 if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
+//                     if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
+//                         console.log(`all criteria for long positions strategy met for ${product_id.split('-')[0]}:`)
+//                         console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
+//                         positions.push(buyParams);
+//                     }
+//                 };
+//             }
+//         }
+//     }
+
+//     //SHORT
+//     if (lowThree < 1.0075) { //filter for assets who are only MAX 0.75% higher than 3 day low
+//         if (meanTwelve < 0.92) {//filter for assets whose price is MIN 8% down of 12 day mean
+//             profitTarget = 1 - meanTwelve; //meanTwelve is the expected value asset will return to shortly in this strat
+//             profitTarget = 1 + profitTarget;
+//             profitTarget = profitTarget * 0.98; //since these are short positions we want to curb profitTarget slightly
+//             //even a 1% decrease is significant here i.e. 1.035 initial profitTarget (min possible value) * 0.99 = 1.025 adjusted profitTarget
+//             buyParams["profitTarget"] = profitTarget;
+//             buyParams["longPosition"] = false;
+//             // console.log(buyParams, priceDelta, hoursSinceLastTrade);
+//             if (!lastTraderOfSameAsset) positions.push(buyParams);
+//             if ((!!lastTraderOfSameAsset) && (hoursSinceLastTrade > 4)) {
+//                 if (priceDelta < 0.98 || hoursSinceLastTrade > 48) {
+//                     console.log(`all criteria for short position strategy met for ${product_id.split('-')[0]}:`)
+//                     console.log("priceDelta:", priceDelta, "hoursSinceLastBuy:", hoursSinceLastTrade);
+//                     positions.push(buyParams);
+//                 }
+//             };
+//         }
+//     }
+// }

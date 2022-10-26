@@ -16,6 +16,7 @@ const AssetSchema = new Schema({
     seventyFiveDayMean: { type: Number },
     seventyFiveDayLow: { type: Number },
     seventyFiveDayHigh: { type: Number },
+    strategy: { type: Object },
     unix: { type: Number, default: Date.now() },
     createdOn: { type: Date, default: Date() },
 })
