@@ -16,7 +16,7 @@ route.post('/new-token', cors(true), async (req, res) => {
     return res.status(500).send('error creating auth record').end();
 });
 
-route.post('/mfa-attempt', async (req, res) => {
+route.post('/mfa-attempt', cors(true), async (req, res) => {
     let token = req.body.token;
     let mfa_code = req.body.mfa_code;
     let authenticated = await authenticateToken(token, mfa_code);

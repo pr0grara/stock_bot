@@ -1,6 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
-const Analysis = require('../../models/Analysis');
+const Sale = require('../../models/Sale');
 const Trader = require('../../models/Trader');
 const Asset = require('../../models/Asset');
 const ccxt = require('ccxt');
@@ -9,6 +9,7 @@ const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro
 // const { BTC_STRAT } = require('./strategies');
 const { idGenerator, SEND_SMS } = require('../../util');
 const { STRAT_1, STRAT_2 } = require('./strategies');
+const LiquidatedTrader = require('../../models/LiquidatedTrader');
 const coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
     apiKey: process.env.CBP3_KEY,
@@ -150,9 +151,27 @@ const generateAssetsObj = async (assets) => {
     return assetsObj;
 }
 
+const UPDATE_META_DATA = async () => {
+    let liquidatedTraders = await LiquidatedTrader.find({});
+    let firstTradeEver = liquidatedTraders[0];
+    let unix = firstTradeEver.unix;
+    const RUN_LENGTH = Math.ceil((Date.now() - unix) / 1000 / 60 / 60 / 24);
+    
+    let sales = await Sale.find({});
+    const NET_PROFIT = ((sales.map(sale => sale.profit).reduce((a, b) => a + b)).toFixed(2) * 0.88);
+    
+    const PROFIT_PER_DAY = (NET_PROFIT / RUN_LENGTH).toFixed(2);
+    const DAILY_INTEREST = (PROFIT_PER_DAY / firstTradeEver.DOLLARS_INVESTED).toFixed(4);
+    const APY = (((PROFIT_PER_DAY * 365) / firstTradeEver.DOLLARS_INVESTED)).toFixed(1);
+
+    firstTradeEver.updateOne({ RUN_LENGTH, NET_PROFIT, PROFIT_PER_DAY, DAILY_INTEREST, APY }).catch(e => console.log(e));
+};
+
 const reviewTradersSellTargets = async () => {
+    UPDATE_META_DATA();
     let unix = Date.now();
     let traders = await Trader.find({});
+
     let tradersObj = {};
     let assets = {};
     traders.forEach(trader => {
@@ -190,9 +209,12 @@ const reviewTradersSellTargets = async () => {
 }
 
 const generateAssetData = async (product_id) => {
-    let granularities = [900, 3600, 21600];
+    let granularities = [300, 900, 3600, 21600, 86400];
     let ticker = await grabTickerData(product_id);
     let currentPrice = parseFloat(ticker.price);
+    let oneDayMean = 0;
+    let oneDayLow = 0;
+    let oneDayHigh = 0;
     let threeDayMean = 0;
     let threeDayLow = 0;
     let threeDayHigh = 0;
@@ -202,11 +224,19 @@ const generateAssetData = async (product_id) => {
     let seventyFiveDayMean = 0;
     let seventyFiveDayLow = 0;
     let seventyFiveDayHigh = 0;
+    let threeHundredDayMean = 0;
+    let threeHundredDayLow = 0;
+    let threeHundredDayHigh = 0;
 
     for (const granularity of granularities) {
         let prices = await grabCandleData(product_id, granularity); //60 300 900 3600 21600 86400
         // console.log(prices)
         switch (granularity) {
+            case 300:
+                oneDayMean = prices.mean;
+                oneDayLow = prices.low.price;
+                oneDayHigh = prices.high.price;
+                break
             case 900:
                 threeDayMean = prices.mean;
                 threeDayLow = prices.low.price;
@@ -222,6 +252,11 @@ const generateAssetData = async (product_id) => {
                 seventyFiveDayLow = prices.low.price;
                 seventyFiveDayHigh = prices.high.price;
                 break
+            case 86400:
+                threeHundredDayMean = prices.mean;
+                threeHundredDayLow = prices.low.price;
+                threeHundredDayHigh = prices.high.price;
+                break
             default:
                 console.log('granularities messed up')
                 break;
@@ -229,26 +264,30 @@ const generateAssetData = async (product_id) => {
     };
 
 
-    return { currentPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
+    return { currentPrice, oneDayMean, oneDayLow, oneDayHigh, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh, threeHundredDayMean, threeHundredDayLow, threeHundredDayHigh }
 }
 
 const generatePerformance = (data) => {
     var proximity = (target) => {
         return currentPrice / target;
-    }
+    };
 
-    let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh];
+    let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh, oneDayMean, oneDayLow, oneDayHigh, threeHundredDayMean, threeHundredDayLow, threeHundredDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh, data.oneDayMean, data.oneDayLow, data.oneDayHigh, data.threeHundredDayMean, data.threeHundredDayLow, data.threeHundredDayHigh];
     let performance;
 
     let proxToMean = {
+        one: proximity(oneDayMean),
         three: proximity(threeDayMean),
         twelve: proximity(twelveDayMean),
-        seventyFive: proximity(seventyFiveDayMean)
+        seventyFive: proximity(seventyFiveDayMean),
+        threeHundred: proximity(threeHundredDayMean)
     };
     let proxToLow = {
+        one: proximity(oneDayLow),
         three: proximity(threeDayLow),
         twelve: proximity(twelveDayLow),
-        seventyFive: proximity(seventyFiveDayLow)
+        seventyFive: proximity(seventyFiveDayLow),
+        threeHundred: proximity(threeHundredDayLow)
     };
 
     performance = { proxToMean, proxToLow };
@@ -257,12 +296,12 @@ const generatePerformance = (data) => {
 
 const updateAsset = async product_id => {
     let data = await generateAssetData(product_id);
-    let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
+    let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh, oneDayMean, oneDayLow, oneDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh, data.oneDayMean, data.oneDayLow, data.oneDayHigh,]
     let unix = Date.now();
     let asset = await Asset.findOne({ product_id });
     
     let history = asset.history;
-    history[unix] = { currentPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
+    history[unix] = { currentPrice, oneDayMean, oneDayLow, oneDayHigh, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
     
     let performance = generatePerformance(data);
 
@@ -270,7 +309,7 @@ const updateAsset = async product_id => {
 
 
     Asset.findOneAndUpdate({ product_id }, {
-        $set: { history, performance, "lastPrice": currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh } 
+        $set: { history, performance, "lastPrice": currentPrice, oneDayMean, oneDayLow, oneDayHigh, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh } 
     }).catch(err => console.log(err));
 
 }
@@ -298,12 +337,12 @@ const updateAllAssets = async () => {
 const createAsset = async (ticker) => {
     let product_id = ticker + "-USD"
     let data = await generateAssetData(product_id);
-    let [ lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh ] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
+    let [lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh, oneDayMean, oneDayLow, oneDayHigh,] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh, data.oneDayMean, data.oneDayLow, data.oneDayHigh,]
     // console.log(lastPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, seventyFiveDayMean)
     let unix = Date.now();
     
     let history = {};
-    history[unix] = { "currentPrice": lastPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
+    history[unix] = { "currentPrice": lastPrice, oneDayMean, oneDayLow, oneDayHigh, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, twelveDayLow, twelveDayHigh, seventyFiveDayMean, seventyFiveDayLow, seventyFiveDayHigh }
 
     let performance = generatePerformance(data);
 
@@ -313,6 +352,9 @@ const createAsset = async (ticker) => {
         lastPrice,
         history,
         performance,
+        oneDayMean,
+        oneDayLow,
+        oneDayHigh,
         threeDayMean,
         threeDayLow,
         threeDayHigh,
@@ -344,9 +386,11 @@ const deleteAsset = (product_id) => {
 }
 
 const generateMarketAverages = async (product_ids) => {
+    let avgMeanOne = 0;
     let avgMeanThree = 0;
     let avgMeanTwelve = 0;
     let avgMeanSeventyFive = 0;
+    let avgLowOne = 0;
     let avgLowThree = 0;
     let avgLowTwelve = 0;
     let avgLowSeventyFive = 0;
@@ -357,21 +401,25 @@ const generateMarketAverages = async (product_ids) => {
         assetsData[product_id] = data;
         // let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
         let performance = generatePerformance(data);
-        let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];
+        let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, meanOne, lowOne] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive, performance.proxToMean.one, performance.proxToLow.one];
+        avgMeanOne = avgMeanOne + meanOne;
         avgMeanThree = avgMeanThree + meanThree;
         avgMeanTwelve = avgMeanTwelve + meanTwelve;
         avgMeanSeventyFive = avgMeanSeventyFive + meanSeventyFive;
+        avgLowOne = avgLowOne + lowOne;
         avgLowThree = avgLowThree + lowThree;
         avgLowTwelve = avgLowTwelve + lowTwelve;
         avgLowSeventyFive = avgLowSeventyFive + lowSeventyFive;
     }
+    avgMeanOne = avgMeanOne / product_ids.length;
     avgMeanThree = avgMeanThree / product_ids.length;
     avgMeanTwelve = avgMeanTwelve / product_ids.length;
     avgMeanSeventyFive = avgMeanSeventyFive / product_ids.length;
+    avgLowOne = avgLowOne / product_ids.length;
     avgLowThree = avgLowThree / product_ids.length;
     avgLowTwelve = avgLowTwelve / product_ids.length;
     avgLowSeventyFive = avgLowSeventyFive / product_ids.length;
-    let marketAverages = { avgMeanThree, avgMeanTwelve, avgMeanSeventyFive, avgLowThree, avgLowTwelve, avgLowSeventyFive };
+    let marketAverages = { avgMeanOne, avgMeanThree, avgMeanTwelve, avgMeanSeventyFive, avgLowOne, avgLowThree, avgLowTwelve, avgLowSeventyFive };
     return [marketAverages, assetsData];
 }
 
@@ -453,9 +501,16 @@ const buyPositions = async (makeNewTrader) => {
     for (const buyParams of positions) await makeNewTrader(buyParams);
 };
 
+const FOLLOW_BTC = async () => {
+    const BTC_DATA = await generateAssetData('ETH-USD');
+    const BTC_PERFORMANCE = generatePerformance(BTC_DATA);
+    console.log(BTC_DATA, BTC_PERFORMANCE);
+};
+
 // analyzeAllAssets()
 // analyze("SHPING-USD").then(res => console.log(res))
-
+// FOLLOW_BTC();
+// reviewTradersSellTargets()
 // analyze("ETH-USD");
 // createAsset("AAVE")
 // createAllAssets()

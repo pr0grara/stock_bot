@@ -20,7 +20,13 @@ const TraderInstanceSchema = new Schema({
     date: { type: Date },
     unix: { type: Number },
     age: { type: Number },
-    liquidatedAt: { type: Date }
+    liquidatedAt: { type: Date },
+    RUN_LENGTH: { type: Number },
+    NET_PROFIT: { type: Number },
+    PROFIT_PER_DAY: { type: Number },
+    DOLLARS_INVESTED: { type: Number },
+    DAILY_INTEREST: { type: Number },
+    APY: { type: Number },
 })
 
 const LiquidatedTrader = mongoose.model('LiquidatedTrader', TraderInstanceSchema)
