@@ -25,6 +25,7 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
         purchasePrice,
         sellPrice,
         rebuyPrice,
+        profitTarget,
         allowance,
         receipt,
         botBuy,

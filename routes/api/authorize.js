@@ -5,9 +5,11 @@ const express = require('express');
 const { MFA, authenticateToken } = require('../../authorize_util');
 const route = express.Router();
 
-route.post('/authorize', (req, res) => {
-    console.log(req);
-    console.log(req.body);
+route.post('/validate-token', async (req, res) => {
+    let token = req.body.token;
+    let authorization = await Authorization.find({ token });
+    if (!authorization || !authorization.authorized) return res.status(200).send(false).end();
+    if (authorization && authorization.authorized) return res.status(200).send(true).end();
 })
 
 route.post('/new-token', cors(true), async (req, res) => {

@@ -8,6 +8,7 @@ const TraderInstanceSchema = new Schema({
     purchasePrice: { type: Number },
     sellPrice: { type: Number },
     rebuyPrice: { type: Number },
+    profitTarget: { type: Number },
     allowance: { type: Number },
     buyReceipt: { type: Object },
     sellReceipt: { type: Object },
