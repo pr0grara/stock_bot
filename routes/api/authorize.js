@@ -1,5 +1,5 @@
-const bcrypt = require('bcrypt');
 const cors = require('cors');
+const jwt = require("jsonwebtoken");
 const Authorization = require('../../models/Authorization');
 const express = require('express');
 const { MFA, authenticateToken } = require('../../authorize_util');
@@ -23,5 +23,15 @@ route.post('/mfa-attempt', cors(true), async (req, res) => {
     if (authenticated) return res.status(200).send(true).end();
     return res.status(404).send(false).end();
 });
+
+route.post('/new-mongo-chart-token', cors(true), async (req, res) => {
+    let token = req.body.token;
+    const authorizationRecord = await Authorization.findOne({ token });
+    if (!authorizationRecord || !authorizationRecord.authorized) return res.status(404).send('unauthorized').end();
+    let chartToken = jwt.sign({ username: "MongoDB" }, process.env.MONGO_DASHBOARD_SECRET, {
+        expiresIn: "24h" // expires in 24 hours
+    }); 
+    res.status(200).json(chartToken).end();
+})
 
 module.exports = route;

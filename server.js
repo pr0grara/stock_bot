@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const mongoose = require('mongoose');
 const PORT = process.env.PORT || 3000;
 const config = require('./config');
@@ -10,6 +11,7 @@ mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
     .catch((err) => console.log('error connecting to mongo: ', err));
 
 app.use(express.json());
+app.use(cors());
 
 const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
