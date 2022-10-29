@@ -7,9 +7,10 @@ const route = express.Router();
 
 route.post('/validate-token', async (req, res) => {
     let token = req.body.token;
-    let authorization = await Authorization.find({ token });
-    if (!authorization || !authorization.authorized) return res.status(200).send(false).end();
-    if (authorization && authorization.authorized) return res.status(200).send(true).end();
+    let authorization = await Authorization.findOne({ token });
+    if (!authorization) return res.status(200).send(false).end();
+    if (!!authorization && authorization.authorized) return res.status(200).send(true).end();
+    return res.status(200).send(false).end();
 })
 
 route.post('/new-token', cors(true), async (req, res) => {

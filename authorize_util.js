@@ -23,14 +23,12 @@ const createAuthorization = async (mfa_code) => {
 const MFA = async () => {
     let mfa_code = idGenerator(4, true);
     let [token, recordCreatedBool] = await createAuthorization(mfa_code);
-    console.log(recordCreatedBool);
     if (recordCreatedBool) SEND_SMS(`MFA Code for New Token: ${mfa_code}`);
     return token;
 };
 
 const authenticateToken = async (token, mfa_code) => {
     let authentication = await Authorization.findOne({ token });
-    console.log(authentication.mfa_code === mfa_code)
     if (!authentication) return false;
     if (authentication.mfa_code === mfa_code) {
         authentication.updateOne({ $set: {authorized: true} }).then(() => console.log('updated auth record')).catch(e=>console.log(e));
