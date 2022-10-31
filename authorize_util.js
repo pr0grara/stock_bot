@@ -45,7 +45,7 @@ const cleanTokens = async () => {
     for (const record of unvalidated) if ((unix - record.unix) / 1000 / 60 > 5) record.deleteOne({});
 
     let validated = authentications.filter(record => !!record.authorized);
-    for (const record of validated) if ((unix - record.unix) / 1000 / 60 / 60 / 24 > 10) record.deleteOne({});
+    for (const record of validated) if ((unix - record.unix) / 1000 / 60 / 60 / 24 > 1) record.deleteOne({});
 
 };
 
