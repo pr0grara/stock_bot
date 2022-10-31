@@ -480,6 +480,7 @@ const checkForBuyPositions = async () => {
             product_id === "ORCA-USD" ||
             product_id === "SHIB-USD" ||
             product_id === "AVAX-USD" ||
+            product_id === "ETC-USD" ||
             product_id === "AAVE-USD") {
             let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
             buyParams["profitTarget"] = profitTarget;
@@ -512,7 +513,7 @@ const FOLLOW_BTC = async () => {
 // FOLLOW_BTC();
 // reviewTradersSellTargets()
 // analyze("ETH-USD");
-// createAsset("AAVE")
+// createAsset("ETC")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
