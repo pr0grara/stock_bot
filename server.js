@@ -5,6 +5,10 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const PORT = process.env.PORT || 3000;
 const config = require('./config');
+const { CREATE_LOOP } = require('./util');
+const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
+const { reviewTradersSellTargets, updateAllAssets, buyPositions } = require('./stock_util/coinbasepro/analyze');
+const { cleanTokens } = require('./authorize_util');
 
 mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
     .then(() => console.log('connected to mongo'))
@@ -16,13 +20,12 @@ app.use(cors());
 const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
 const authorizeRoutes = require('./routes/api/authorize');
-const { CREATE_LOOP } = require('./util');
-const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
-const { reviewTradersSellTargets, updateAllAssets, buyPositions } = require('./stock_util/coinbasepro/analyze');
-const { cleanTokens } = require('./authorize_util');
+const assetsRoutes = require('./routes/api/assets');
+
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api/authenticate', authorizeRoutes);
+app.use('/api/assets', assetsRoutes);
 
 app.get('/', (req, res) => {
     res.send('stockbot home')

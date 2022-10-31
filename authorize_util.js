@@ -46,7 +46,13 @@ const cleanTokens = async () => {
 
     let validated = authentications.filter(record => !!record.authorized);
     for (const record of validated) if ((unix - record.unix) / 1000 / 60 / 60 / 24 > 1) record.deleteOne({});
-
 };
 
-module.exports = { MFA, authenticateToken, cleanTokens }
+const validateToken = async (token) => {
+    let authorization = await Authorization.findOne({ token });
+    if (!authorization) return false;
+    if (!authorization.authorized) return false;
+    return true;
+}
+
+module.exports = { MFA, authenticateToken, cleanTokens, validateToken }

@@ -123,16 +123,6 @@ const buyBool = async (analysis, product_id, currentPrice) => {
     return true; //if all checks pass then BUY
 }
 
-const analyzeAllAssets = async () => {
-    let report = [];
-    for (const product_id of product_ids) {
-        let analysis = await analyze(product_id);
-        let bool = await buyBool(analysis);
-        if (bool === true) report.push(analysis);
-    }
-    console.log(JSON.stringify(report))
-};
-
 const generateAges = (traders, unix) => {
     let ages = {};
     for (const trader of traders) {
@@ -508,7 +498,26 @@ const FOLLOW_BTC = async () => {
     console.log(BTC_DATA, BTC_PERFORMANCE);
 };
 
-// analyzeAllAssets()
+const generateAssetsForClient = async () => {
+    let product_ids = await grab_all_product_ids();
+    let assetsObj = {};
+
+    for (const product_id of product_ids) {
+        assetsObj[product_id] = {};
+        let analysis = await analyze(product_id);
+        let data = await generateAssetData(product_id);
+        let performance = generatePerformance(data);
+        assetsObj[product_id]["analysis"] = analysis;
+        assetsObj[product_id]["data"] = data;
+        assetsObj[product_id]["performance"] = performance;
+        assetsObj[product_id]["ticker"] = product_id.split('-')[0];
+    };
+
+    // console.log(JSON.stringify(assetsObj))
+    return assetsObj;
+};
+
+// generateAssetsForClient()
 // analyze("SHPING-USD").then(res => console.log(res))
 // FOLLOW_BTC();
 // reviewTradersSellTargets()
@@ -524,7 +533,7 @@ const FOLLOW_BTC = async () => {
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient };
 
 //DEPRECATED ORIGINAL STRATEGIES
 // let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];
