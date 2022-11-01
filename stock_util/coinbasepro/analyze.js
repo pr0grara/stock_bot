@@ -436,6 +436,7 @@ const checkForBuyPositions = async () => {
     console.log('checking for buy positions')
     let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(product_ids);
+    console.log("generated results and product_ids")
     let [marketAverages, assetsData] = [results[0], results[1]];
     let positions = [];
     
@@ -446,6 +447,7 @@ const checkForBuyPositions = async () => {
         let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
+        console.log("generated latest trader")
 
         if (product_id === "ETH-USD" ||
             product_id === "BTC-USD" ||
@@ -492,6 +494,7 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
+    console.log(funds.USD)
     if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
