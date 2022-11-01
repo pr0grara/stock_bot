@@ -432,12 +432,18 @@ const findLatestTrader = async (product_id, longBool) => {
 }
 
 const checkForBuyPositions = async () => {
+    let t0 = Date.now();
     console.log('checking for buy positions')
     let product_ids = await grab_all_product_ids();
+    // let t1 = Date.now();
+    // console.log(`grabbed ids in ${(t1 - t0) / 1000} sec`)
     let results = await generateMarketAverages(product_ids);
+    // let t2 = Date.now();
+    // console.log(`data generated in ${(t2 - t1) / 1000} sec`)
     let [marketAverages, assetsData] = [results[0], results[1]];
     let positions = [];
     
+    // let t3 = Date.now()
     for (const product_id of product_ids) {
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
@@ -483,9 +489,14 @@ const checkForBuyPositions = async () => {
             buyParams["strat"] = "STRAT_3";
             if (!!profitTarget) positions.push(buyParams)
         }
+        // let t4 = Date.now();
+        // console.log(`${product_id} checked in ${(t4 - t3) / 1000} sec`);
+        // t3 = Date.now();
     };
+    let t5 = Date.now();
+    console.log(`All buy positions checked in ${(t5 - t0) / 1000} sec`)
     if (positions.length > 0) return positions;
-    console.log("no buy positions found");
+    console.log('No buys found');
     return false;
 };
 
@@ -529,11 +540,11 @@ const generateAssetsForClient = async () => {
 // FOLLOW_BTC();
 // reviewTradersSellTargets()
 // analyze("ETH-USD");
-// createAsset("ETC")
+// createAsset("ZEC")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-// checkForBuyPositions();
+checkForBuyPositions();
 // checkForBuyPositions().then(res => console.log(res));
 // buyPositions()
 // findLatestTrader('BTC-USD').then(res => console.log(res))
