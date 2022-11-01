@@ -17,7 +17,7 @@ const coinbasepro = new ccxt.coinbasepro({
 });
 
 const grabCandleData = async (product_id, granularity) => {
-    let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=${granularity || 900}`);//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
+    let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=${granularity || 900}`).catch(e => console.log(e));//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
     console.log(product_id, granularity, " candle data grabbed")
     candles = candles.data;
     let prices = {};
