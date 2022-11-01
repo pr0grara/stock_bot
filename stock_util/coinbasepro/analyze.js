@@ -16,7 +16,13 @@ const coinbasepro = new ccxt.coinbasepro({
     secret: process.env.CBP3_SECRET
 });
 
-const grabCandleData = async (product_id, granularity) => {
+const grabCandleData = async (product_id, granularity, lastReq) => {
+    let now = Date.now();
+    console.Console.log(now);
+    if (now - lastReq < 333) {
+        await new Promise((res, rej) => setTimeout(() => res(), 333 - (now - t0)))
+    };
+    console.log(Date.now())
     let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=${granularity || 900}`).catch(e => console.log(e));//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
     console.log(product_id, granularity, " candle data grabbed")
     candles = candles.data;
@@ -220,9 +226,11 @@ const generateAssetData = async (product_id) => {
     let threeHundredDayMean = 0;
     let threeHundredDayLow = 0;
     let threeHundredDayHigh = 0;
+    let t0 = Date.now();
 
     for (const granularity of granularities) {
-        let prices = await grabCandleData(product_id, granularity); //60 300 900 3600 21600 86400
+        let prices = await grabCandleData(product_id, granularity, t0); //60 300 900 3600 21600 86400
+        t0 = Date.now();
         // console.log(prices)
         switch (granularity) {
             case 300:
