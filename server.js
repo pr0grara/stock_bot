@@ -42,4 +42,6 @@ if (config.PROD) CREATE_LOOP(async () => {
     await updateAllAssets()
 }, 59);
 
+console.log(!!(Date.now() - undefined < 333))
+
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
