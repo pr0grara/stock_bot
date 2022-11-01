@@ -18,7 +18,7 @@ const coinbasepro = new ccxt.coinbasepro({
 
 const grabCandleData = async (product_id, granularity, lastReq) => {
     let now = Date.now();
-    console.Console.log(now);
+    console.log(now);
     if (now - lastReq < 333) {
         await new Promise((res, rej) => setTimeout(() => res(), 333 - (now - t0)))
     };
