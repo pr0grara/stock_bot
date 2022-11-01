@@ -18,13 +18,10 @@ const coinbasepro = new ccxt.coinbasepro({
 
 const grabCandleData = async (product_id, granularity, lastReq) => {
     let now = Date.now();
-    console.log(now);
     if (now - lastReq < 333) {
         await new Promise((res, rej) => setTimeout(() => res(), 333 - (now - lastReq)))
     };
-    console.log(Date.now())
     let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=${granularity || 900}`).catch(e => console.log(e));//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
-    console.log(product_id, granularity, " candle data grabbed")
     candles = candles.data;
     let prices = {};
     let pricesArr = candles.map(candle => parseFloat(((candle[1] + candle[2]) / 2)));
@@ -53,8 +50,6 @@ const grabCandleData = async (product_id, granularity, lastReq) => {
 
 const grabTickerData = async (product_id) => {
     let ticker = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/ticker`);
-    console.log(product_id, " ticker data grabbed")
-
     ticker = ticker.data;
     return ticker;
 };
@@ -91,16 +86,19 @@ const deltaPercent = (currentPrice, historicalPrices) => {
 }
 
 
-const analyze = async (product_id, currentPrice) => {
+const analyze = async (product_id, currentPrice, lastReq) => {
     let ticker 
     if (!currentPrice) {
         ticker = await grabTickerData(product_id);
         currentPrice = parseFloat(ticker.price);
-        // currentPrice = 1208;
-    }
-    let historicalPrices = await grabCandleData(product_id);
+    };
+
+    if (!lastReq) lastReq = Date.now();
+    let historicalPrices = await grabCandleData(product_id, 900, lastReq);
+    
     let percent = deltaPercent(currentPrice, historicalPrices.prices);
     let delta = deltaHighOrLow(currentPrice, historicalPrices);
+    
     let analysis = {
         percent,
         delta,
@@ -122,13 +120,11 @@ const analyze = async (product_id, currentPrice) => {
 }
 
 const buyBool = async (analysis, product_id, currentPrice) => {
-    // let analysis = await analyze(product_id, currentPrice);
-    // console.log(analysis)
+
     if (analysis.percent > 0) return false; //if percent is up any percent from the average of historical data do not buy
     if (analysis.delta.highDelta > -0.0075) return false; //if price is not lower than 0.75% the highest price during historical data do not buy
     if (analysis.delta.lowDelta > 0.01) return false; //if price is higher than 1% the lowest price during historical data do not buy
-    // if (analysis.delta.scores.lowScore) return false; 
-    // if (analysis.delta.scores.highScore) return false; 
+
     return true; //if all checks pass then BUY
 }
 
@@ -226,12 +222,11 @@ const generateAssetData = async (product_id) => {
     let threeHundredDayMean = 0;
     let threeHundredDayLow = 0;
     let threeHundredDayHigh = 0;
-    let t0 = Date.now();
+    let lastReq = Date.now();
 
     for (const granularity of granularities) {
-        let prices = await grabCandleData(product_id, granularity, t0); //60 300 900 3600 21600 86400
-        t0 = Date.now();
-        // console.log(prices)
+        let prices = await grabCandleData(product_id, granularity, lastReq); //60 300 900 3600 21600 86400
+        lastReq = Date.now();
         switch (granularity) {
             case 300:
                 oneDayMean = prices.mean;
@@ -306,9 +301,6 @@ const updateAsset = async product_id => {
     
     let performance = generatePerformance(data);
 
-    // console.log(currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean ,performance);
-
-
     Asset.findOneAndUpdate({ product_id }, {
         $set: { history, performance, "lastPrice": currentPrice, oneDayMean, oneDayLow, oneDayHigh, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh } 
     }).catch(err => console.log(err));
@@ -316,7 +308,6 @@ const updateAsset = async product_id => {
 }
 
 const grab_all_product_ids = async () => {
-    // let product_ids = ["ETH-USD", "BTC-USD", "ADA-USD", "DOGE-USD", "LTC-USD", "ORCA-USD", "REP-USD", "COMP-USD", "XTZ-USD", "MANA-USD", "DASH-USD", "PERP-USD"];
     let assets = await Asset.find({});
     let product_ids = assets.map(asset => asset.product_id);
     return product_ids;
@@ -329,7 +320,6 @@ const grab_all_assets = async () => {
 
 const updateAllAssets = async () => {
     let product_ids = await grab_all_product_ids();
-    // console.log(product_ids)
     for (const product_id of product_ids) {
         await updateAsset(product_id);
     };
@@ -339,7 +329,6 @@ const createAsset = async (ticker) => {
     let product_id = ticker + "-USD"
     let data = await generateAssetData(product_id);
     let [lastPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh, oneDayMean, oneDayLow, oneDayHigh,] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh, data.oneDayMean, data.oneDayLow, data.oneDayHigh,]
-    // console.log(lastPrice, threeDayMean, threeDayLow, threeDayHigh, twelveDayMean, seventyFiveDayMean)
     let unix = Date.now();
     
     let history = {};
@@ -397,13 +386,9 @@ const generateMarketAverages = async (product_ids) => {
     let avgLowSeventyFive = 0;
     let assetsData = {};
 
-    console.log(product_ids);
-
     for (const product_id of product_ids) {
         let data = await generateAssetData(product_id);
-        console.log(product_id, ': data generated')
         assetsData[product_id] = data;
-        // let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
         let performance = generatePerformance(data);
         let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, meanOne, lowOne] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive, performance.proxToMean.one, performance.proxToLow.one];
         avgMeanOne = avgMeanOne + meanOne;
@@ -450,7 +435,6 @@ const checkForBuyPositions = async () => {
     console.log('checking for buy positions')
     let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(product_ids);
-    console.log("generated results and product_ids")
     let [marketAverages, assetsData] = [results[0], results[1]];
     let positions = [];
     
@@ -461,7 +445,6 @@ const checkForBuyPositions = async () => {
         let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
-        console.log("generated latest trader")
 
         if (product_id === "ETH-USD" ||
             product_id === "BTC-USD" ||
@@ -508,7 +491,6 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
-    console.log(funds.USD)
     if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
@@ -524,10 +506,12 @@ const FOLLOW_BTC = async () => {
 const generateAssetsForClient = async () => {
     let product_ids = await grab_all_product_ids();
     let assetsObj = {};
+    let lastReq = Date.now();
 
     for (const product_id of product_ids) {
         assetsObj[product_id] = {};
-        let analysis = await analyze(product_id);
+        let analysis = await analyze(product_id, 900, lastReq);
+        lastReq = Date.now();
         let data = await generateAssetData(product_id);
         let performance = generatePerformance(data);
         assetsObj[product_id]["analysis"] = analysis;
