@@ -390,7 +390,7 @@ const generateMarketAverages = async (product_ids) => {
 
     for (const product_id of product_ids) {
         let data = await generateAssetData(product_id);
-        console.log('data generated')
+        console.log(product_id, ': data generated')
         assetsData[product_id] = data;
         // let [currentPrice, threeDayMean, twelveDayMean, seventyFiveDayMean, threeDayLow, threeDayHigh, twelveDayLow, twelveDayHigh, seventyFiveDayLow, seventyFiveDayHigh] = [data.currentPrice, data.threeDayMean, data.twelveDayMean, data.seventyFiveDayMean, data.threeDayLow, data.threeDayHigh, data.twelveDayLow, data.twelveDayHigh, data.seventyFiveDayLow, data.seventyFiveDayHigh]
         let performance = generatePerformance(data);
