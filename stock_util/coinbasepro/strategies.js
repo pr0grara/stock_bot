@@ -22,7 +22,7 @@ const STRAT_1 = (performance, marketAverages, lastTrader, currentPrice) => {
     let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];        
     let [comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateComparatives(performance, marketAverages);
 
-    if (meanThree < 0.975) return (1 - meanThree) + 1;
+    if (meanThree < 0.978) return ((1 - meanThree) + 1) * 1.05;
     if (lowThree < 1.005 && meanTwelve < 0.975) return ((1- meanTwelve) + 1) * 1.05;
     return false;
 };
@@ -40,7 +40,7 @@ const STRAT_2 = (performance, marketAverages, lastTrader, currentPrice) => {
 
     if (lowThree < 1.005) { //filter for assets who are only MAX 0.5% higher than 3 day low
         if (meanTwelve < 0.965) {//filter for assets whose price is MIN 5% down of 12 day mean 
-            return ((1 - meanTwelve) + 1) * 1.10;
+            return ((1 - meanTwelve) + 1) * 1.05;
         };
     };
     if (meanThree < 0.965 && meanTwelve < 0.975) return ((1 - meanThree) + 1) * 1.05;
