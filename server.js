@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => {
     cleanTokens()
-    buyPositions(makeNewTrader);
+    // buyPositions(makeNewTrader);
 }, 31);
 if (config.PROD) CREATE_LOOP(async () => {
     await reviewTradersSellTargets()
