@@ -16,7 +16,8 @@ route.post('/make-new', async (req, res) => {
         asset: req.body.asset,
         quantity: req.body.quantity,
         usd: req.body.usd,
-        profitTarget: req.body.profitTarget
+        profitTarget: req.body.profitTarget,
+        strat: "HUMAN_BUY"
     };
     let newTrader = await makeNewTrader(buyParams, false);
     if (!!newTrader) res.status(200).json(newTrader).end();

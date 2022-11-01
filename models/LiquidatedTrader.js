@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const TraderInstanceSchema = new Schema({
+const LiquidatedTraderInstanceSchema = new Schema({
     id: { type: String },
     asset: { type: String },
     quantity: { type: Number },
@@ -29,6 +29,6 @@ const TraderInstanceSchema = new Schema({
     APY: { type: Number },
 })
 
-const LiquidatedTrader = mongoose.model('LiquidatedTrader', TraderInstanceSchema)
+const LiquidatedTrader = mongoose.model('LiquidatedTrader', LiquidatedTraderInstanceSchema)
 
 module.exports = LiquidatedTrader;

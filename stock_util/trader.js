@@ -7,7 +7,7 @@ const { analyze, buyBool } = require('./coinbasepro/analyze');
 
 
 const makeNewTrader = async (buyParams, botBuyBool) => {
-    let [asset, quantity, usd, profitTarget, longPosition] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget, buyParams.longPosition];
+    let [asset, quantity, usd, profitTarget, strat] = [buyParams.asset, buyParams.quantity, buyParams.usd, buyParams.profitTarget, buyParams.strat];
     if (!profitTarget) profitTarget = 1.022;
     let id = idGenerator();
     let purchasePrice = await CBP.checkMarketPrice(asset + '/USD');
@@ -29,7 +29,7 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
         allowance,
         receipt,
         botBuy,
-        longPosition,
+        strat,
         date: Date(),
         unix: Date.now()
     });
@@ -53,7 +53,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
             let purchaseDate = new Date(trader.date);
             let purchaseUnix = purchaseDate.getTime();
             let duration = Date.now() - purchaseUnix;
-            duration = (duration / 1000 / 60 / 24).toFixed(1);
+            duration = (duration / 1000 / 60 / 60 / 24).toFixed(1);
             let newSale = new Sale({
                 id: idGenerator(),
                 traderId: trader.id,
@@ -131,8 +131,21 @@ const analyzeAssetsAndBuy = async (usdAllowance) => {
 const reactivateLiquidatedTrader = async (id) => {
     let liquidatedTrader = await LiquidatedTrader.find({ id });
     Trader.insertMany(liquidatedTrader[0]).then(() => LiquidatedTrader.findOneAndRemove({ id }).catch(e => console.log(e)));
-}
+};
+
+const modifySales = async () => { //set up to clean up "duration" field of Sale
+    let sales = await Sale.find({});
+    for (const sale of sales) {
+        let saleUnix = new Date(sale.date).getTime();
+        let trader = await LiquidatedTrader.findOne({ id: sale.traderId });
+        let purchaseUnix = new Date(trader.date).getTime();
+        let daysElapsed = parseFloat(((saleUnix - purchaseUnix) / 1000 / 60 / 60 / 24).toFixed(1));
+        console.log(daysElapsed);
+        sale.updateOne({$set: {duration: daysElapsed}}).catch(e=>console.log(e));
+    }
+};
 
 // reactivateLiquidatedTrader("krGbWxyfiyO6");
+// modifySales()
 
 module.exports = { makeNewTrader, runAllTraders, analyzeAssetsAndBuy };

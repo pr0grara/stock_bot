@@ -8,7 +8,7 @@ const product_ids = require('../../docs/cb_product_id.json');
 const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro');
 // const { BTC_STRAT } = require('./strategies');
 const { idGenerator, SEND_SMS } = require('../../util');
-const { STRAT_1, STRAT_2 } = require('./strategies');
+const { STRAT_1, STRAT_2, STRAT_3 } = require('./strategies');
 const LiquidatedTrader = require('../../models/LiquidatedTrader');
 const coinbasepro = new ccxt.coinbasepro({
     password: process.env.CBP3_PASS,
@@ -443,7 +443,7 @@ const checkForBuyPositions = async () => {
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
-        let buyParams = { "asset": product_id.split('-')[0], "usd": 15 };
+        let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
 
@@ -458,8 +458,8 @@ const checkForBuyPositions = async () => {
             product_id === "MKR-USD") {
             let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
             buyParams["profitTarget"] = profitTarget;
+            buyParams["strat"] = "STRAT_1";
             if (!!profitTarget) positions.push(buyParams);
-            continue;
         };
 
         if (product_id === "DASH-USD" ||
@@ -474,11 +474,17 @@ const checkForBuyPositions = async () => {
             product_id === "AAVE-USD") {
             let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
             buyParams["profitTarget"] = profitTarget;
+            buyParams["strat"] = "STRAT_2";
             if (!!profitTarget) positions.push(buyParams);
-            continue;
         };
-    };
 
+        if (product_id) {
+            let profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+            buyParams["profitTarget"] = profitTarget;
+            buyParams["strat"] = "STRAT_3";
+            if (!!profitTarget) positions.push(buyParams)
+        }
+    };
     if (positions.length > 0) return positions;
     console.log("no buy positions found");
     return false;
