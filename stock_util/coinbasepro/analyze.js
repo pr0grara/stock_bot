@@ -445,6 +445,7 @@ const checkForBuyPositions = async () => {
     
     // let t3 = Date.now()
     for (const product_id of product_ids) {
+        let product_positions = [];
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
@@ -452,47 +453,58 @@ const checkForBuyPositions = async () => {
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
 
-        if (product_id === "ETH-USD" ||
-            product_id === "BTC-USD" ||
-            product_id === "MANA-USD" ||
-            product_id === "DOGE-USD" ||
-            product_id === "COMP-USD" || 
-            product_id === "XTZ-USD" || 
-            product_id === "LTC-USD" || 
-            product_id === "REP-USD" || 
-            product_id === "MKR-USD") {
-            let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-            buyParams["profitTarget"] = profitTarget;
-            buyParams["strat"] = "STRAT_1";
-            if (!!profitTarget) positions.push(buyParams);
-        };
+        // if (product_id === "ETH-USD" ||
+        //     product_id === "BTC-USD" ||
+        //     product_id === "MANA-USD" ||
+        //     product_id === "DOGE-USD" ||
+        //     product_id === "COMP-USD" || 
+        //     product_id === "XTZ-USD" || 
+        //     product_id === "LTC-USD" || 
+        //     product_id === "REP-USD" || 
+        //     product_id === "MKR-USD") {
+        let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        buyParams["profitTarget"] = profitTarget;
+        buyParams["strat"] = "STRAT_1";
+        if (!!profitTarget) product_positions.push(buyParams);
+        // };
 
-        if (product_id === "DASH-USD" ||
-            product_id === "DOT-USD" ||
-            product_id === "KNC-USD" ||
-            product_id === "ADA-USD" ||
-            product_id === "PERP-USD" ||
-            product_id === "ORCA-USD" ||
-            product_id === "SHIB-USD" ||
-            product_id === "AVAX-USD" ||
-            product_id === "ETC-USD" ||
-            product_id === "AAVE-USD") {
-            let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-            buyParams["profitTarget"] = profitTarget;
-            buyParams["strat"] = "STRAT_2";
-            if (!!profitTarget) positions.push(buyParams);
-        };
+        // if (product_id === "DASH-USD" ||
+        //     product_id === "DOT-USD" ||
+        //     product_id === "KNC-USD" ||
+        //     product_id === "ADA-USD" ||
+        //     product_id === "PERP-USD" ||
+        //     product_id === "ORCA-USD" ||
+        //     product_id === "SHIB-USD" ||
+        //     product_id === "AVAX-USD" ||
+        //     product_id === "ETC-USD" ||
+        //     product_id === "AAVE-USD") {
+        profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        buyParams["profitTarget"] = profitTarget;
+        buyParams["strat"] = "STRAT_2";
+        if (!!profitTarget) product_positions.push(buyParams);
+        // };
 
-        if (product_id) {
-            let profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-            buyParams["profitTarget"] = profitTarget;
-            buyParams["strat"] = "STRAT_3";
-            if (!!profitTarget) positions.push(buyParams)
+        profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        buyParams["profitTarget"] = profitTarget;
+        buyParams["strat"] = "STRAT_3";
+        if (!!profitTarget) product_positions.push(buyParams);
+
+        let topPos;
+        if (product_positions.length === 1) {
+            topPos = product_positions[0];
+        } else if (product_positions.length > 1) {
+            topPos = product_positions.shift();
+            product_positions.forEach(pos => {
+                if (pos.profitTarget > topPos.profitTarget) topPos = pos;
+            })
         }
+
+        if (topPos) positions.push(topPos);
         // let t4 = Date.now();
         // console.log(`${product_id} checked in ${(t4 - t3) / 1000} sec`);
         // t3 = Date.now();
     };
+
     let t5 = Date.now();
     console.log(`All buy positions checked in ${(t5 - t0) / 1000} sec`)
     if (positions.length > 0) return positions;
@@ -544,7 +556,7 @@ const generateAssetsForClient = async () => {
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")
-checkForBuyPositions();
+// checkForBuyPositions();
 // checkForBuyPositions().then(res => console.log(res));
 // buyPositions()
 // findLatestTrader('BTC-USD').then(res => console.log(res))

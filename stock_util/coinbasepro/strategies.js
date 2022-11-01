@@ -64,7 +64,7 @@ const STRAT_3 = (performance, marketAverages, lastTrader, currentPrice) => {
 
     if (comparative12Mean < 0.95 && meanTwelve < 0.99) return (1 - ((comparative12Mean + meanTwelve) / 2) + 1);
     return false;
-}
+};
 
 const ETH_STRAT = (performance, marketAverages, lastTrader, currentPrice) => { 
     if (lastTrader) {
