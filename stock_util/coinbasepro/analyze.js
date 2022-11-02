@@ -434,18 +434,13 @@ const findLatestTrader = async (product_id, longBool) => {
 const checkForBuyPositions = async () => {
     let t0 = Date.now();
     console.log('checking for buy positions')
+
     let product_ids = await grab_all_product_ids();
-    // let t1 = Date.now();
-    // console.log(`grabbed ids in ${(t1 - t0) / 1000} sec`)
     let results = await generateMarketAverages(product_ids);
-    // let t2 = Date.now();
-    // console.log(`data generated in ${(t2 - t1) / 1000} sec`)
     let [marketAverages, assetsData] = [results[0], results[1]];
     let positions = [];
     
-    // let t3 = Date.now()
     for (const product_id of product_ids) {
-        console.log(`BEGIN ${product_id}`)
         let product_positions = [];
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
@@ -458,54 +453,14 @@ const checkForBuyPositions = async () => {
 
         STRATS.forEach((STRAT, idx) => {
             let profitTarget = STRAT(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-            buyParams["profitTarget"] = profitTarget;
-            buyParams["strat"] = `STRAT_${idx+1}`;
-            if (!!profitTarget) product_positions.push(buyParams);
+            if (!!profitTarget) {
+                buyParams["profitTarget"] = profitTarget;
+                buyParams["strat"] = `STRAT_${idx + 1}`;
+                product_positions.push(Object.assign({}, buyParams));
+            }
         })
 
-        // if (product_id === "ETH-USD" ||
-        //     product_id === "BTC-USD" ||
-        //     product_id === "MANA-USD" ||
-        //     product_id === "DOGE-USD" ||
-        //     product_id === "COMP-USD" || 
-        //     product_id === "XTZ-USD" || 
-        //     product_id === "LTC-USD" || 
-        //     product_id === "REP-USD" || 
-        //     product_id === "MKR-USD") {
-        // if (product_id) {
-        //     let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        //     buyParams["profitTarget"] = profitTarget;
-        //     buyParams["strat"] = "STRAT_1";
-        //     if (!!profitTarget) product_positions.push(buyParams);
-        // };
-
-        // if (product_id === "DASH-USD" ||
-        //     product_id === "DOT-USD" ||
-        //     product_id === "KNC-USD" ||
-        //     product_id === "ADA-USD" ||
-        //     product_id === "PERP-USD" ||
-        //     product_id === "ORCA-USD" ||
-        //     product_id === "SHIB-USD" ||
-        //     product_id === "AVAX-USD" ||
-        //     product_id === "ETC-USD" ||
-        //     product_id === "AAVE-USD") {
-        // if (product_id) {
-        //     let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        //     buyParams["profitTarget"] = profitTarget;
-        //     buyParams["strat"] = "STRAT_2";
-        //     if (!!profitTarget) product_positions.push(buyParams);
-        // };
-
-        // if (product_id) {
-        //     let profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        //     buyParams["profitTarget"] = profitTarget;
-        //     buyParams["strat"] = "STRAT_3";
-        //     if (profitTarget) continue;
-        //     if (profitTarget > 1.022) product_positions.push(buyParams);
-        // };
-
         let topPos;
-        product_positions = product_positions.filter(pos => !!pos.profitTarget)
         if (product_positions.length === 1) {
             topPos = product_positions[0];
         } else if (product_positions.length > 1) {
@@ -515,11 +470,7 @@ const checkForBuyPositions = async () => {
             })
         }
         
-        // console.log(`top pos for ${product_id}`, topPos)
         if (topPos) positions.push(topPos);
-        // let t4 = Date.now();
-        // console.log(`${product_id} checked in ${(t4 - t3) / 1000} sec`);
-        // t3 = Date.now();
     };
 
     let t5 = Date.now();
@@ -534,7 +485,7 @@ const buyPositions = async (makeNewTrader) => {
     if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
-    for (const buyParams of positions) await makeNewTrader(buyParams);
+    for (const buyParams of positions) await makeNewTrader(buyParams, true);
 };
 
 const FOLLOW_BTC = async () => {
@@ -564,6 +515,13 @@ const generateAssetsForClient = async () => {
     return assetsObj;
 };
 
+var testParams = {
+    product_ids: ["AVAX-USD", "MANA-USD"],
+    // marketAverages: {},
+    // latestTrader: {},
+    // profitTarget: false
+}
+
 // generateAssetsForClient()
 // analyze("SHPING-USD").then(res => console.log(res))
 // FOLLOW_BTC();
@@ -580,7 +538,7 @@ const generateAssetsForClient = async () => {
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient, generateAssetData };
 
 //DEPRECATED ORIGINAL STRATEGIES
 // let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];

@@ -63,11 +63,9 @@ const STRAT_3 = (performance, marketAverages, lastTrader, currentPrice) => {
     let [meanThree, meanTwelve, meanSeventyFive, meanThreeHundred, lowThree, lowTwelve, lowSeventyFive, lowThreeHundred, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages)
 
     if (comparative12Mean < 0.95 && meanTwelve < 0.99) {
-        console.log('conditions met', (1 - ((comparative12Mean + meanTwelve) / 2) + 1))
         return (1 - ((comparative12Mean + meanTwelve) / 2) + 1);
     }
-    // console.log(comparative12Low, meanTwelve);
-    // console.log('passed initial check but not conditional check')
+
     return false;
 };
 
