@@ -445,6 +445,7 @@ const checkForBuyPositions = async () => {
     
     // let t3 = Date.now()
     for (const product_id of product_ids) {
+        console.log(`BEGIN ${product_id}`)
         let product_positions = [];
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
@@ -452,6 +453,15 @@ const checkForBuyPositions = async () => {
         let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
+
+        const STRATS = [ STRAT_1, STRAT_2, STRAT_3 ]
+
+        STRATS.forEach((STRAT, idx) => {
+            let profitTarget = STRAT(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+            buyParams["profitTarget"] = profitTarget;
+            buyParams["strat"] = `STRAT_${idx+1}`;
+            if (!!profitTarget) product_positions.push(buyParams);
+        })
 
         // if (product_id === "ETH-USD" ||
         //     product_id === "BTC-USD" ||
@@ -462,10 +472,11 @@ const checkForBuyPositions = async () => {
         //     product_id === "LTC-USD" || 
         //     product_id === "REP-USD" || 
         //     product_id === "MKR-USD") {
-        let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        buyParams["profitTarget"] = profitTarget;
-        buyParams["strat"] = "STRAT_1";
-        if (!!profitTarget) product_positions.push(buyParams);
+        // if (product_id) {
+        //     let profitTarget = STRAT_1(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        //     buyParams["profitTarget"] = profitTarget;
+        //     buyParams["strat"] = "STRAT_1";
+        //     if (!!profitTarget) product_positions.push(buyParams);
         // };
 
         // if (product_id === "DASH-USD" ||
@@ -478,18 +489,23 @@ const checkForBuyPositions = async () => {
         //     product_id === "AVAX-USD" ||
         //     product_id === "ETC-USD" ||
         //     product_id === "AAVE-USD") {
-        profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        buyParams["profitTarget"] = profitTarget;
-        buyParams["strat"] = "STRAT_2";
-        if (!!profitTarget) product_positions.push(buyParams);
+        // if (product_id) {
+        //     let profitTarget = STRAT_2(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        //     buyParams["profitTarget"] = profitTarget;
+        //     buyParams["strat"] = "STRAT_2";
+        //     if (!!profitTarget) product_positions.push(buyParams);
         // };
 
-        profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
-        buyParams["profitTarget"] = profitTarget;
-        buyParams["strat"] = "STRAT_3";
-        if (!!profitTarget) product_positions.push(buyParams);
+        // if (product_id) {
+        //     let profitTarget = STRAT_3(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+        //     buyParams["profitTarget"] = profitTarget;
+        //     buyParams["strat"] = "STRAT_3";
+        //     if (profitTarget) continue;
+        //     if (profitTarget > 1.022) product_positions.push(buyParams);
+        // };
 
         let topPos;
+        product_positions = product_positions.filter(pos => !!pos.profitTarget)
         if (product_positions.length === 1) {
             topPos = product_positions[0];
         } else if (product_positions.length > 1) {
@@ -498,7 +514,8 @@ const checkForBuyPositions = async () => {
                 if (pos.profitTarget > topPos.profitTarget) topPos = pos;
             })
         }
-
+        
+        // console.log(`top pos for ${product_id}`, topPos)
         if (topPos) positions.push(topPos);
         // let t4 = Date.now();
         // console.log(`${product_id} checked in ${(t4 - t3) / 1000} sec`);
