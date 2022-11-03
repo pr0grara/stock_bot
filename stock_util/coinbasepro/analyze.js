@@ -482,7 +482,7 @@ const checkForBuyPositions = async () => {
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
-    if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
+    if (funds.USD < 50) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $50 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
     for (const buyParams of positions) await makeNewTrader(buyParams, true);
