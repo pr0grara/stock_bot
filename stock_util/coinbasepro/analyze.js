@@ -527,7 +527,7 @@ var testParams = {
 // FOLLOW_BTC();
 // reviewTradersSellTargets()
 // analyze("ETH-USD");
-// createAsset("ZEC")
+// createAsset("SYN")
 // createAllAssets()
 // updateAllAssets()
 // deleteAsset("AVAX-USD")

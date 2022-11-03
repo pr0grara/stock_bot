@@ -2,26 +2,27 @@ const { checkForBuyPositions, generateAssetData, generatePerformance } = require
 const { STRAT_1, STRAT_2, STRAT_3 } = require('./strategies');
 
 const product_ids = [
-    'LTC-USD',
-    'DOGE-USD',
-    'BTC-USD',
-    'ETH-USD',
-    'ADA-USD',
-    'REP-USD',
-    'XTZ-USD',
-    'COMP-USD',
-    'ORCA-USD',
-    'MANA-USD',
-    'DASH-USD',
-    'PERP-USD',
-    'DOT-USD',
-    'KNC-USD',
-    'AVAX-USD',
-    'SHIB-USD',
-    'XLM-USD',
-    'AAVE-USD',
-    'ETC-USD',
-    'ZEC-USD'
+    'LTC-USDT',
+    'DOGE-USDT',
+    'BTC-USDT',
+    'ETH-USDT',
+    'ADA-USDT',
+    'REP-USDT',
+    'XTZ-USDT',
+    'COMP-USDT',
+    'ORCA-USDT',
+    'MANA-USDT',
+    'DASH-USDT',
+    'PERP-USDT',
+    'DOT-USDT',
+    'KNC-USDT',
+    'AVAX-USDT',
+    'SHIB-USDT',
+    'XLM-USDT',
+    'AAVE-USDT',
+    'ETC-USDT',
+    'ZEC-USDT',
+    'SYN-USDT'
 ];
 
 var testParams = {
@@ -79,7 +80,6 @@ const simulate_checkForBuyPositions = async () => {
     let t0 = Date.now();
     console.log('checking for buy positions')
 
-    // let product_ids = await grab_all_product_ids();
     let t1 = Date.now();
     console.log(`grabbed ids in ${(t1 - t0) / 1000} sec`)
     let results = await generateMarketAverages(product_ids);
@@ -136,9 +136,6 @@ const simulate_checkForBuyPositions = async () => {
 };
 
 // simulate_checkForBuyPositions().then(res => console.log(res));
-
-// checkForBuyPositions().then(res => console.log(res))
-// checkForBuyPositions(testParams).then(res => console.log(res))
 
 // if (product_id === "ETH-USD" ||
         //     product_id === "BTC-USD" ||
