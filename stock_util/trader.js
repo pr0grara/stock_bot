@@ -15,7 +15,7 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
     let sellPrice = purchasePrice * profitTarget;
     let rebuyPrice = purchasePrice;
     let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
-    let allowance = quantity * purchasePrice;
+    let principal = quantity * purchasePrice;
     let botBuy = !!botBuyBool;
 
     let newTrader = new Trader({
@@ -26,7 +26,7 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
         sellPrice,
         rebuyPrice,
         profitTarget,
-        allowance,
+        principal,
         receipt,
         botBuy,
         strat,
@@ -44,7 +44,10 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
 }
 
 const liquidateTrader = (trader, soldAtPrice) => {
-    CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
+    let principalQuant = trader.principal / soldAtPrice;
+    let profitQuant = trader.quantity - principalQuant;
+    // CBP.makeCoinbaseSell(trader.asset + "/USD", principalQuant)
+    CBP.makeCoinbaseSellWithProfit(trader.asset, [principalQuant, profitQuant])
         .then(res => {
             LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
             let purchaseAmnt = trader.quantity * trader.purchasePrice;
@@ -66,13 +69,9 @@ const liquidateTrader = (trader, soldAtPrice) => {
             })
             newSale.save();
             SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
-            trader.update({
-                quantity: 0,
-                sellReceipt: res,
-                liquidatedAt: Date()
-            })
         })
         .catch(err => console.log(`ERROR MAKING SALE, id: ${trader.id}, attempted soldAtPrice: ${soldAtPrice}, attempted quantity: ${trader.quantity}`, err))
+    
 };
 
 const runAllTraders = async () => {
@@ -145,7 +144,16 @@ const modifySales = async () => { //set up to clean up "duration" field of Sale
     }
 };
 
+const modifyTraders = async () => {
+    let traders = await Trader.find({});
+
+    for (const trader of traders) {
+        trader.updateOne({ $unset: { allowance: "" } }).then(res=>console.log(res)).catch(e=>console.log(e));
+    };
+};
+
 // reactivateLiquidatedTrader("krGbWxyfiyO6");
 // modifySales()
+// modifyTraders();
 
 module.exports = { makeNewTrader, runAllTraders, analyzeAssetsAndBuy };

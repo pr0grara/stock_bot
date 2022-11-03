@@ -21,7 +21,6 @@ const getCoinbaseBalances = async (symbol) => {
 
 const makeCoinbaseBuy = async (asset, quantity) => {
     let buyOrder = await coinbasepro.createOrder(asset, "market", "buy", quantity)
-    // console.log(buyOrder)
     return buyOrder;
 }
 
@@ -30,66 +29,47 @@ const makeCoinbaseSell = async (asset, quantity) => {
     console.log(sellOrder)
 }
 
+const makeCoinbaseSellWithProfit = async (asset, quantities) => {
+    let [principalQuant, profitQuant] = [...quantities];
+    await coinbasepro.createOrder(asset + "/USDT", principalQuant);
+    await coinbasepro.createOrder(asset + "/USD", profitQuant);
+    console.log(`sold ${principalQuant} of ${asset} (principal) into USDT and ${profitQuant} (profit) into USD`);
+    return
+};
+
 const checkMarketPrice = async (ticker) => {
     const price = await coinbasepro.fetchTicker(ticker)
-    // console.log(price.info.price);
     return price.info.price;
 }
 
-const run = async () => {
-    const results = await Promise.all([
-        axios.get('https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd'),
-        // axios.get('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd')
-    ])
-    let balance = await getCoinbaseBalances("ADA");
-    if (balance.total["BTC"] < 0.0025) {
-        await makeCoinbaseBuy("ADA/USD", 5)
-        getCoinbaseBalances("ADA")
-    }
+const WITHDRAW_FUNDS = async (amount) => {
+    const CODE = "USDT";
+    const ADDRESS = process.env.TETHER_WITHDRAW_ADDRESS;
+    coinbasepro.withdraw(CODE, amount, ADDRESS).then(res => console.log(res)).catch(e => console.log(e))
 }
 
 const describeCcxtExchanges = () => {
-    // console.log(coinbase.describe().has)
-    // console.log(ccxt.exchanges);
     let CCXT_CLASSES = Object.keys(ccxt);
     let exchanges = ccxt.exchanges;
 
     CCXT_CLASSES.forEach(clas => {
         if (exchanges.includes(clas)) {
-            // ccxt.coinbase.describe()
             let newExch = new ccxt[clas];
             let hasObj = newExch.describe().has;
             let hasBool = hasObj.createOrder;
             console.log(clas, hasBool)
-            // console.log(new ccxt[clas].describe())
         }
     })
 }
 
-const ethereum = async () => {
-    let balance = await getCoinbaseBalances("ETH");
-    let price = await checkMarketPrice("ETH/USD");
-    // if (price < 1300) {
-    //     makeCoinbaseBuy("ETH/USD", 0.005)
-    // }
-    if (price > 1330) {
-        makeCoinbaseSell("ETH/USD", balance)
-    }
+const test = async () => {
+    let market = await coinbasepro.withdraw()
+    // let account = await coinbasepro.account();
+    console.log(market)
 }
 
-// coinbasepro.loadMarkets()
-//     .then(res => console.log(res["ADA/USDT"]))
-// getCoinbaseBalances()
-// checkCoinbaseFunds()
-// run()
-// ethereum()
+// test()
+// makeCoinbaseSell("USDT/USD", 1)
+// WITHDRAW_FUNDS(1);
 
-// CREATE_LOOP(ethereum, 0.5);
-// checkMarketPrice('DOGE/USD');
-// MakeNewTraderInstance("ETH", 0.01)
-
-// makeCoinbaseSell("ETH/USD", .01)
-// makeCoinbaseBuy("ETH/USD", 0.01);
-// console.log(Date())
-
-module.exports = { ethereum, checkMarketPrice, getCoinbaseBalances, makeCoinbaseBuy, makeCoinbaseSell, checkCoinbaseFunds }
+module.exports = { checkMarketPrice, getCoinbaseBalances, makeCoinbaseBuy, makeCoinbaseSell, checkCoinbaseFunds, WITHDRAW_FUNDS, makeCoinbaseSellWithProfit }

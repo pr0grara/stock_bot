@@ -8,7 +8,7 @@ const LiquidatedTraderInstanceSchema = new Schema({
     purchasePrice: { type: Number },
     sellPrice: { type: Number },
     rebuyPrice: { type: Number },
-    allowance: { type: Number },
+    principal: { type: Number },
     buyReceipt: { type: Object },
     sellReceipt: { type: Object },
     botBuy: { type: Boolean },

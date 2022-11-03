@@ -21,6 +21,7 @@ const traderRoutes = require('./routes/api/trader');
 const analyzeRoutes = require('./routes/api/analyze');
 const authorizeRoutes = require('./routes/api/authorize');
 const assetsRoutes = require('./routes/api/assets');
+const { WITHDRAW_FUNDS } = require('./ccxt/coinbasepro');
 
 app.use('/api/trader', traderRoutes);
 app.use('/api/analyze', analyzeRoutes);
@@ -41,5 +42,10 @@ if (config.PROD) CREATE_LOOP(async () => {
     await reviewTradersSellTargets()
     await updateAllAssets()
 }, 59);
+
+// WITHDRAW_FUNDS({
+//     code: "USD",
+//     amount: 1.0
+// })
 
 app.listen(PORT, () => console.log(`StockBot listening on port ${PORT}`));
