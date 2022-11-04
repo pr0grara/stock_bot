@@ -32,8 +32,6 @@ app.get('/', (req, res) => {
     res.send('stockbot home')
 });
 
-
-runAllTraders()
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => {
     cleanTokens()
