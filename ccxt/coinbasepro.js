@@ -64,9 +64,9 @@ const describeCcxtExchanges = () => {
 }
 
 const test = async () => {
-    let market = await coinbasepro.withdraw()
-    // let account = await coinbasepro.account();
-    console.log(market)
+    // let market = await coinbasepro.withdraw()
+    let account = await coinbasepro.createDepositAddress("USDT");
+    console.log(account)
 }
 
 // test()
