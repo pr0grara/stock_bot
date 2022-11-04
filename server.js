@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
 });
 
 
+runAllTraders()
 if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => {
     cleanTokens()

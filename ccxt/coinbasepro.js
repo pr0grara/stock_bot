@@ -31,8 +31,9 @@ const makeCoinbaseSell = async (asset, quantity) => {
 
 const makeCoinbaseSellWithProfit = async (asset, quantities) => {
     let [principalQuant, profitQuant] = [...quantities];
-    await coinbasepro.createOrder(asset + "/USDT", principalQuant);
-    await coinbasepro.createOrder(asset + "/USD", profitQuant);
+    console.log(asset, principalQuant, profitQuant)
+    await coinbasepro.createOrder(asset + "/USDT", "market", "sell", principalQuant);
+    await coinbasepro.createOrder(asset + "/USD", "market", "sell", profitQuant);
     console.log(`sold ${principalQuant} of ${asset} (principal) into USDT and ${profitQuant} (profit) into USD`);
     return
 };
