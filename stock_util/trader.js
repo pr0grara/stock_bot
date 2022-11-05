@@ -14,7 +14,8 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
     if (!!usd) quantity = usd / purchasePrice;
     let sellPrice = purchasePrice * profitTarget;
     let rebuyPrice = purchasePrice;
-    let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
+    let receipt = await CBP.makeCoinbaseBuy(asset + "/USDT", quantity);
+    // let receipt = await CBP.makeCoinbaseBuy(asset + "/USD", quantity);
     let principal = quantity * purchasePrice;
     let botBuy = !!botBuyBool;
 

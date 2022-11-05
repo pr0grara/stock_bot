@@ -16,7 +16,7 @@ const initialCheck = (lastTrader, currentPrice) => {
         let hoursSinceLastTrade = (Date.now() - lastTrader.unix) / 1000 / 60 / 60;
         let priceDelta = currentPrice / lastTrader.purchasePrice;
         if ((!!lastTrader) && (hoursSinceLastTrade < 2)) return false;
-        if (priceDelta > 0.98 || hoursSinceLastTrade < 48) return false;
+        if (priceDelta > 0.98 || hoursSinceLastTrade < 12) return false;
     };
     return true;
 };
