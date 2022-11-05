@@ -18,8 +18,8 @@ const coinbasepro = new ccxt.coinbasepro({
 
 const grabCandleData = async (product_id, granularity, lastReq) => {
     let now = Date.now();
-    if (now - lastReq < 333) {
-        await new Promise((res, rej) => setTimeout(() => res(), 333 - (now - lastReq)))
+    if (now - lastReq < 200) {
+        await new Promise((res, rej) => setTimeout(() => res(), 200 - (now - lastReq)))
     };
     let candles = await axios.get(`https://api.exchange.coinbase.com/products/${product_id}/candles?granularity=${granularity || 900}`).catch(e => console.log(e));//granularity of 900 means candle lengths are 15min, with 300 candles representing data for last 3.125 days
     candles = candles.data;
@@ -479,8 +479,6 @@ const checkForBuyPositions = async () => {
     console.log('No buys found');
     return false;
 };
-
-checkCoinbaseFunds().then(res=> console.log(res));
 
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();

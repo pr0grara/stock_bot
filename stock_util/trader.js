@@ -50,6 +50,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
     CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
     // CBP.makeCoinbaseSellWithProfit(trader.asset, [principalQuant, profitQuant])
         .then(() => {
+            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
             LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
             let purchaseAmnt = trader.quantity * trader.purchasePrice;
             let sellAmnt = trader.quantity * soldAtPrice;
@@ -64,12 +65,14 @@ const liquidateTrader = (trader, soldAtPrice) => {
                 asset: trader.asset,
                 quantity: trader.quantity,
                 purchasePrice: trader.purchasePrice,
+                profitTarget: trader.profitTarget,
+                strat: trader.strat || "N/A",
                 sellPrice: soldAtPrice,
+                botBuy: trader.botBuy,
                 profit,
                 duration
             })
             newSale.save();
-            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
         })
         .catch(err => console.log(`ERROR MAKING SALE, id: ${trader.id}, attempted soldAtPrice: ${soldAtPrice}, attempted quantity: ${trader.quantity}`, err))
     

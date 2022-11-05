@@ -122,8 +122,8 @@ const simulate_checkForBuyPositions = async () => {
         }
 
         console.log(`top pos for ${product_id}`, topPos)
-        // if (topPos) positions.push(topPos);
-        if (product_positions.length > 0) positions.push(...product_positions)
+        if (topPos) positions.push(topPos);
+        // if (product_positions.length > 0) positions.push(...product_positions)
         let t4 = Date.now();
         console.log(`${product_id} checked in ${(t4 - t3)} ms`);
     };
@@ -135,7 +135,7 @@ const simulate_checkForBuyPositions = async () => {
     return false;
 };
 
-// simulate_checkForBuyPositions().then(res => console.log(res));
+simulate_checkForBuyPositions().then(res => console.log(res));
 
 // if (product_id === "ETH-USD" ||
         //     product_id === "BTC-USD" ||

@@ -20,6 +20,8 @@ const LiquidatedTraderInstanceSchema = new Schema({
     date: { type: Date },
     unix: { type: Number },
     age: { type: Number },
+    strat: { type: String },
+    profitTarget: { type: Number },
     liquidatedAt: { type: Date },
     RUN_LENGTH: { type: Number },
     NET_PROFIT: { type: Number },
