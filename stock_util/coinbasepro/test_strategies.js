@@ -135,7 +135,7 @@ const simulate_checkForBuyPositions = async () => {
     return false;
 };
 
-simulate_checkForBuyPositions().then(res => console.log(res));
+// simulate_checkForBuyPositions().then(res => console.log(res));
 
 // if (product_id === "ETH-USD" ||
         //     product_id === "BTC-USD" ||
