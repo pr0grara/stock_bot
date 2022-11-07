@@ -445,7 +445,7 @@ const checkForBuyPositions = async () => {
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
-        let buyParams = { "asset": product_id.split('-')[0], "USD": 20 };
+        let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
 
