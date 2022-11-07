@@ -50,7 +50,7 @@ const STRAT_2 = (performance, marketAverages, lastTrader, currentPrice) => {
     let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages)
 
     if (lowThree < 1.005) { //filter for assets who are only MAX 0.5% higher than 3 day low
-        if (meanTwelve < 0.965) {//filter for assets whose price is MIN 5% down of 12 day mean 
+        if (meanTwelve < 0.965) {//filter for assets whose price is MIN 3.5% down of 12 day mean 
             return ((1 - meanTwelve) + 1) * 1.015;
         };
     };

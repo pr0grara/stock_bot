@@ -445,7 +445,7 @@ const checkForBuyPositions = async () => {
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
-        let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
+        let buyParams = { "asset": product_id.split('-')[0], "USD": 20 };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
 
@@ -483,7 +483,7 @@ const checkForBuyPositions = async () => {
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
     // if (funds.USD < 50) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $50 min.`);
-    if (funds.USDT < 20) return console.log(`buys canceled due to insufficient funds USDT: $${funds.USDT}. $20 min.`);
+    if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $20 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
     for (const buyParams of positions) await makeNewTrader(buyParams, true);
@@ -539,7 +539,7 @@ var testParams = {
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient, generateAssetData };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient, generateAssetData, grabCandleData };
 
 //DEPRECATED ORIGINAL STRATEGIES
 // let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];

@@ -10,4 +10,8 @@ route.get('/', async (req, res) => {
     res.status(200).send(analysis).end();
 });
 
+route.get('/candle?params', (req, res) => {
+    res.send('success')
+});
+
 module.exports = route;
