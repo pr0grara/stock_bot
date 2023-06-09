@@ -38,7 +38,7 @@ if (config.PROD) CREATE_LOOP(() => {
     buyPositions(makeNewTrader);
 }, 31);
 if (config.PROD) CREATE_LOOP(async () => {
-    await reviewTradersSellTargets()
+    // await reviewTradersSellTargets()
     await updateAllAssets()
 }, 59);
 
