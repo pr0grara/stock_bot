@@ -37,10 +37,10 @@ if (config.PROD) CREATE_LOOP(() => {
     cleanTokens()
     buyPositions(makeNewTrader);
 }, 31);
-if (config.PROD) CREATE_LOOP(async () => {
-    // await reviewTradersSellTargets()
-    await updateAllAssets()
-}, 59);
+// if (config.PROD) CREATE_LOOP(async () => {
+//     // await reviewTradersSellTargets()
+//     await updateAllAssets()
+// }, 59);
 
 // WITHDRAW_FUNDS({
 //     code: "USD",

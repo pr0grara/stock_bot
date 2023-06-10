@@ -3,18 +3,19 @@ const axios = require('axios');
 const Sale = require('../../models/Sale');
 const Trader = require('../../models/Trader');
 const Asset = require('../../models/Asset');
-const ccxt = require('ccxt');
-const product_ids = require('../../docs/cb_product_id.json');
+// const ccxt = require('ccxt');
+// const product_ids = require('../../docs/cb_product_id.json');
 const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro');
 // const { BTC_STRAT } = require('./strategies');
 const { idGenerator, SEND_SMS } = require('../../util');
 const { STRAT_1, STRAT_2, STRAT_3 } = require('./strategies');
 const LiquidatedTrader = require('../../models/LiquidatedTrader');
-const coinbasepro = new ccxt.coinbasepro({
-    password: process.env.CBP3_PASS,
-    apiKey: process.env.CBP3_KEY,
-    secret: process.env.CBP3_SECRET
-});
+const { PRODUCT_IDS } = require('../../config');
+// const coinbasepro = new ccxt.coinbasepro({
+//     password: process.env.CBP3_PASS,
+//     apiKey: process.env.CBP3_KEY,
+//     secret: process.env.CBP3_SECRET
+// });
 
 const grabCandleData = async (product_id, granularity, lastReq) => {
     let now = Date.now();
@@ -308,22 +309,24 @@ const updateAsset = async product_id => {
 }
 
 const grab_all_product_ids = async () => {
-    let assets = await Asset.find({});
+    let assets = await Asset.find({}).catch(err => console.log(err));
     let product_ids = assets.map(asset => asset.product_id);
+    console.log(product_ids)
     return product_ids;
 };
 
-const grab_all_assets = async () => {
-    let assets = await Asset.find({});
-    return assets;
-};
 
-const updateAllAssets = async () => {
-    let product_ids = await grab_all_product_ids();
-    for (const product_id of product_ids) {
-        await updateAsset(product_id);
-    };
-};
+// const grab_all_assets = async () => {
+//     let assets = await Asset.find({});
+//     return assets;
+// };
+
+// const updateAllAssets = async () => {
+//     // let product_ids = await grab_all_product_ids();
+//     for (const product_id of PRODUCT_IDS) {
+//         await updateAsset(product_id);
+//     };
+// };
 
 const createAsset = async (ticker) => {
     let product_id = ticker + "-USD"
@@ -435,12 +438,12 @@ const checkForBuyPositions = async () => {
     let t0 = Date.now();
     console.log('checking for buy positions')
 
-    let product_ids = await grab_all_product_ids();
-    let results = await generateMarketAverages(product_ids);
+    // let product_ids = await grab_all_product_ids();
+    let results = await generateMarketAverages(PRODUCT_IDS);
     let [marketAverages, assetsData] = [results[0], results[1]];
     let positions = [];
     
-    for (const product_id of product_ids) {
+    for (const product_id of PRODUCT_IDS) {
         let product_positions = [];
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
@@ -483,7 +486,7 @@ const checkForBuyPositions = async () => {
 const buyPositions = async (makeNewTrader) => {
     let funds = await checkCoinbaseFunds();
     // if (funds.USD < 50) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $50 min.`);
-    if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $20 min.`);
+    if (funds.USD < 100) return console.log(`buys canceled due to insufficient funds USD: $${funds.USD}. $100 min.`);
     let positions = await checkForBuyPositions();
     if (!positions) return;
     for (const buyParams of positions) await makeNewTrader(buyParams, true);
@@ -539,7 +542,7 @@ var testParams = {
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, updateAllAssets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, grab_all_assets, findLatestTrader, generateAssetsForClient, generateAssetData, grabCandleData };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, findLatestTrader, generateAssetsForClient, generateAssetData, grabCandleData };
 
 //DEPRECATED ORIGINAL STRATEGIES
 // let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];
