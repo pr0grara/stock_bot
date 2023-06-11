@@ -6,5 +6,6 @@ const PRODUCT_IDS = ['LTC-USD', 'DOGE-USD', 'BTC-USD',
     'DOT-USD', 'KNC-USD', 'AVAX-USD',
     'SHIB-USD', 'XLM-USD', 'AAVE-USD',
     'ETC-USD', 'ZEC-USD', 'SYN-USD'];
+const PRINCIPLE = 5;
 
-module.exports = { PROD, PRODUCT_IDS };
+module.exports = { PROD, PRODUCT_IDS, PRINCIPLE };

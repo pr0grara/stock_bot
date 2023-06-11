@@ -21,8 +21,7 @@ const initialCheck = (lastTrader, currentPrice) => {
     return true;
 };
 
-const generateAllVals = (performance, marketAverages) => {
-    let comparatives = generateComparatives(performance, marketAverages);
+const generateAllVals = (performance, marketAverages, comparatives) => {
     return [
         performance.proxToMean.three, 
         performance.proxToMean.twelve, 
@@ -36,31 +35,31 @@ const generateAllVals = (performance, marketAverages) => {
     ];
 };
 
-const STRAT_1 = (performance, marketAverages, lastTrader, currentPrice) => { 
+const STRAT_1 = (performance, marketAverages, lastTrader, currentPrice, comparatives, product_id) => { 
     if (!initialCheck(lastTrader, currentPrice)) return false;
-    let [meanThree, meanTwelve, meanSeventyFive, meanThreeHundred, lowThree, lowTwelve, lowSeventyFive, lowThreeHundred, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages)
+    let [meanThree, meanTwelve, meanSeventyFive, meanThreeHundred, lowThree, lowTwelve, lowSeventyFive, lowThreeHundred, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages, comparatives[product_id])
 
-    if (meanThree < 0.978) return ((1 - meanThree) + 1) * 1.05;
-    if (lowThree < 1.005 && meanTwelve < 0.975) return ((1- meanTwelve) + 1) * 1.05;
+    if (meanThree < 0.978) return ((1 - meanThree) + 1) * 1.005;
+    if (lowThree < 1.005 && meanTwelve < 0.975) return ((1- meanTwelve) + 1) * 1.005;
     return false;
 };
 
-const STRAT_2 = (performance, marketAverages, lastTrader, currentPrice) => {
+const STRAT_2 = (performance, marketAverages, lastTrader, currentPrice, comparatives, product_id) => {
     if (!initialCheck(lastTrader, currentPrice)) return false;
-    let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages)
+    let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages, comparatives[product_id])
 
     if (lowThree < 1.005) { //filter for assets who are only MAX 0.5% higher than 3 day low
         if (meanTwelve < 0.965) {//filter for assets whose price is MIN 3.5% down of 12 day mean 
-            return ((1 - meanTwelve) + 1) * 1.015;
+            return ((1 - meanTwelve) + 1);
         };
     };
-    if (meanThree < 0.965 && meanTwelve < 0.975) return ((1 - meanThree) + 1) * 1.015;
+    if (meanThree < 0.965 && meanTwelve < 0.975) return ((1 - meanThree) + 1);
     return false;
 };
 
-const STRAT_3 = (performance, marketAverages, lastTrader, currentPrice) => {
+const STRAT_3 = (performance, marketAverages, lastTrader, currentPrice, comparatives, product_id) => {
     if (!initialCheck(lastTrader, currentPrice)) return false;
-    let [meanThree, meanTwelve, meanSeventyFive, meanThreeHundred, lowThree, lowTwelve, lowSeventyFive, lowThreeHundred, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages)
+    let [meanThree, meanTwelve, meanSeventyFive, meanThreeHundred, lowThree, lowTwelve, lowSeventyFive, lowThreeHundred, comparative3Mean, comparative12Mean, comparative75Mean, comparative3Low, comparative12Low, comparative75Low] = generateAllVals(performance, marketAverages, comparatives[product_id])
 
     if (comparative12Mean < 0.95 && meanTwelve < 0.99) {
         return (1 - ((comparative12Mean + meanTwelve) / 2) + 1);
@@ -337,4 +336,4 @@ const XLM_STRAT = (performance, marketAverages, lastTrader, currentPrice) => {
 // generateComprehensiveAnalysis();
 // run("BTC-USD");
 
-module.exports = { STRAT_1, STRAT_2, STRAT_3 }
+module.exports = { STRAT_1, STRAT_2, STRAT_3, generateComparatives }

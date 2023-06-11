@@ -152,9 +152,11 @@ const modifyTraders = async () => {
     let traders = await Trader.find({});
 
     for (const trader of traders) {
-        trader.updateOne({ $unset: { allowance: "" } }).then(res=>console.log(res)).catch(e=>console.log(e));
+        trader.updateOne({ $unset: { proximityHistory: "" } }).then(res=>console.log(res)).catch(e=>console.log(e));
     };
 };
+
+// modifyTraders()
 
 // reactivateLiquidatedTrader("krGbWxyfiyO6");
 // modifySales()

@@ -8,9 +8,9 @@ const Asset = require('../../models/Asset');
 const { checkMarketPrice, checkCoinbaseFunds } = require('../../ccxt/coinbasepro');
 // const { BTC_STRAT } = require('./strategies');
 const { idGenerator, SEND_SMS } = require('../../util');
-const { STRAT_1, STRAT_2, STRAT_3 } = require('./strategies');
+const { STRAT_1, STRAT_2, STRAT_3, generateComparatives } = require('./strategies');
 const LiquidatedTrader = require('../../models/LiquidatedTrader');
-const { PRODUCT_IDS } = require('../../config');
+const { PRODUCT_IDS, PRINCIPLE } = require('../../config');
 // const coinbasepro = new ccxt.coinbasepro({
 //     password: process.env.CBP3_PASS,
 //     apiKey: process.env.CBP3_KEY,
@@ -388,11 +388,13 @@ const generateMarketAverages = async (product_ids) => {
     let avgLowTwelve = 0;
     let avgLowSeventyFive = 0;
     let assetsData = {};
+    let performances = {};
 
     for (const product_id of product_ids) {
         let data = await generateAssetData(product_id);
         assetsData[product_id] = data;
         let performance = generatePerformance(data);
+        performances[product_id] = performance;
         let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive, meanOne, lowOne] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive, performance.proxToMean.one, performance.proxToLow.one];
         avgMeanOne = avgMeanOne + meanOne;
         avgMeanThree = avgMeanThree + meanThree;
@@ -412,12 +414,19 @@ const generateMarketAverages = async (product_ids) => {
     avgLowTwelve = avgLowTwelve / product_ids.length;
     avgLowSeventyFive = avgLowSeventyFive / product_ids.length;
     let marketAverages = { avgMeanOne, avgMeanThree, avgMeanTwelve, avgMeanSeventyFive, avgLowOne, avgLowThree, avgLowTwelve, avgLowSeventyFive };
-    return [marketAverages, assetsData];
+
+    let comparatives = {};
+    for (const product_id of product_ids) {
+        comparatives[product_id] = generateComparatives(performances[product_id], marketAverages);
+    }
+    return [marketAverages, assetsData, comparatives];
 }
 
 const findLatestTrader = async (product_id, longBool) => {
+    // let t0 = Date.now();
     let ticker = product_id.split('-')[0];
     let traders = await Trader.find();
+    // console.log(`traders found in ${(Date.now() - t0) / 1000}s`)
     traders = traders.filter(trader => trader.asset === ticker);
     if (traders.length < 1) return;
 
@@ -430,7 +439,7 @@ const findLatestTrader = async (product_id, longBool) => {
             if (trader.unix >= newestTrader.unix) newestTrader = trader;
         }
     });
-
+    // console.log(`last trader found in ${(Date.now() - t0) / 1000}s`)
     return newestTrader
 }
 
@@ -440,44 +449,53 @@ const checkForBuyPositions = async () => {
 
     // let product_ids = await grab_all_product_ids();
     let results = await generateMarketAverages(PRODUCT_IDS);
-    let [marketAverages, assetsData] = [results[0], results[1]];
+    let t1 = Date.now();
+    let [marketAverages, assetsData, comparatives] = [results[0], results[1], results[2]];
     let positions = [];
+    // console.log(`market averages generated in ${(t1 - t0) / 1000}s`)
+    // console.log(marketAverages, assetsData)
     
     for (const product_id of PRODUCT_IDS) {
+        // let tStart = Date.now();
         let product_positions = [];
         let data = assetsData[product_id];
         let currentPrice = data.currentPrice;
         let performance = generatePerformance(data);
-        let buyParams = { "asset": product_id.split('-')[0], "usd": 20 };
+        let buyParams = { "asset": product_id.split('-')[0], "usd": PRINCIPLE };
         
         let lastTraderOfSameAsset = await findLatestTrader(product_id);
 
         const STRATS = [ STRAT_1, STRAT_2, STRAT_3 ]
 
         STRATS.forEach((STRAT, idx) => {
-            let profitTarget = STRAT(performance, marketAverages, lastTraderOfSameAsset, currentPrice);
+            // console.log(product_id, comparatives[product_id])
+            let profitTarget = STRAT(performance, marketAverages, lastTraderOfSameAsset, currentPrice, comparatives, product_id);
             if (!!profitTarget) {
                 buyParams["profitTarget"] = profitTarget;
                 buyParams["strat"] = `STRAT_${idx + 1}`;
+                buyParams["currentPrice"] = currentPrice;
                 product_positions.push(Object.assign({}, buyParams));
             }
         })
 
-        let topPos;
+        let position;
         if (product_positions.length === 1) {
-            topPos = product_positions[0];
+            position = product_positions[0];
         } else if (product_positions.length > 1) {
-            topPos = product_positions.shift();
+            position = product_positions.shift();
             product_positions.forEach(pos => {
-                if (pos.profitTarget > topPos.profitTarget) topPos = pos;
+                if (pos.profitTarget < position.profitTarget) position = pos;
             })
         }
         
-        if (topPos) positions.push(topPos);
+        if (position) positions.push(position);
+        // let tFin = Date.now();
+        // console.log(`${product_id} analyzed in ${(tFin - tStart) / 1000}s`)
     };
 
-    let t5 = Date.now();
-    console.log(`All buy positions checked in ${(t5 - t0) / 1000} sec`)
+    let t2 = Date.now();
+    console.log(`All products strat checked in ${(t2 - t1) / 1000}s`)
+    console.log(`Total time: ${(t2 - t0) / 1000}s`)
     if (positions.length > 0) return positions;
     console.log('No buys found');
     return false;
