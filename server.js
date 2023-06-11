@@ -42,9 +42,9 @@ if (config.PROD) CREATE_LOOP(() => {
 //     await updateAllAssets()
 // }, 59);
 
-checkForBuyPositions().then(res => {
-    console.log(res, `${res.length} positions for $${res.length * config.PRINCIPLE}`)
-});
+// checkForBuyPositions().then(res => {
+//     console.log(res, `${res.length} positions for $${res.length * config.PRINCIPLE}`)
+// });
 
 // WITHDRAW_FUNDS({
 //     code: "USD",
