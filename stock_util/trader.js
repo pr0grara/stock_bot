@@ -151,9 +151,21 @@ const modifySales = async () => { //set up to clean up "duration" field of Sale
 const modifyTraders = async () => {
     let traders = await Trader.find({});
 
+    let lockedPrinciple = 0;
+    let liquidPrinciple = 0;
     for (const trader of traders) {
-        trader.updateOne({ $unset: { proximityHistory: "" } }).then(res=>console.log(res)).catch(e=>console.log(e));
+        if (!!trader.sellPriceAdjust.length > 0) {
+            // console.log(trader)
+            let profitTarget = trader.profitTarget || 1.05;
+            let newSellPrice = trader.purchasePrice * profitTarget;
+            console.log(trader.sellPrice, trader.currentPrice);
+            lockedPrinciple = lockedPrinciple + trader.purchasePrice * trader.quantity
+            liquidPrinciple = liquidPrinciple + trader.currentPrice * trader.quantity
+            // trader.updateOne({ $set: { sellPrice: newSellPrice } }).then(res=>console.log(res)).catch(err=>console.log(err));
+        }
+        // trader.updateOne({ $unset: { proximityHistory: "" } }).then(res=>console.log(res)).catch(e=>console.log(e));
     };
+    console.log(lockedPrinciple, liquidPrinciple, lockedPrinciple - liquidPrinciple);
 };
 
 // modifyTraders()
