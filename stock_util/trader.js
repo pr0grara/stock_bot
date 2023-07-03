@@ -76,15 +76,18 @@ const liquidateTrader = (trader, soldAtPrice) => {
     CBP.makeCoinbaseSell(trader.asset + "/USD", trader.quantity)
     // CBP.makeCoinbaseSellWithProfit(trader.asset, [principalQuant, profitQuant])
         .then(() => {
-            SEND_SMS(`Trader ${trader.id} sold ${trader.quantity} of ${trader.asset} at $${soldAtPrice}\nPurchase price was ${trader.purchasePrice}`);
-            LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
-            let purchaseAmnt = trader.quantity * trader.purchasePrice;
+            let id = trader.id;
+            let quantity = trader.quantity;
+            let purchasePrice = trader.purchasePrice;
+            let purchaseAmnt = quantity * purchasePrice;
             let sellAmnt = trader.quantity * soldAtPrice;
             let profit = sellAmnt - purchaseAmnt;
             let purchaseDate = new Date(trader.date);
             let purchaseUnix = purchaseDate.getTime();
             let duration = Date.now() - purchaseUnix;
             duration = (duration / 1000 / 60 / 60 / 24).toFixed(1);
+            SEND_SMS(`${id} (${trader.asset}, $${purchaseAmnt}, ${duration} hrs) sold ${quantity.toFixed(4)} @ $${soldAtPrice}\nPurchase price was ${trader.purchasePrice} for $${profit.toFixed(2)} profit`);
+            LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
             let newSale = new Sale({
                 id: idGenerator(),
                 traderId: trader.id,
