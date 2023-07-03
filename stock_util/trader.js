@@ -44,6 +44,32 @@ const makeNewTrader = async (buyParams, botBuyBool) => {
     return newTrader;
 }
 
+const confirmInsuficientFunds = async (trader, id) => {
+    if (!!id) trader = await Trader.findOne({ id });
+    
+    let asset = trader.asset;
+    let assetBalance = (await CBP.getCoinbaseBalances())["total"][asset];
+    return (trader.quantity > assetBalance) ? assetBalance : false;
+}
+
+const deleteTrader = async (id) => {
+    let deleted = await Trader.deleteOne({ id });
+    console.log(deleted);
+    if (!!deleted) return true;
+    return false;
+};
+
+const forceLiquidateTrader = async (trader, id, assetBalance) => {
+    if (!!id) trader = await Trader.findOne({ id });
+
+    let sold = await CBP.makeCoinbaseSell(trader.asset + "/USD", assetBalance);
+    if (!!sold) {
+        let mongoReceipt = await deleteTrader(trader.id);
+        if (mongoReceipt.deletedCount > 0) return true;
+        return false;
+    }
+};
+
 const liquidateTrader = (trader, soldAtPrice) => {
     // let principalQuant = trader.principal / soldAtPrice;
     // let profitQuant = trader.quantity - principalQuant;
@@ -74,7 +100,21 @@ const liquidateTrader = (trader, soldAtPrice) => {
             })
             newSale.save();
         })
-        .catch(err => console.log(`ERROR MAKING SALE, id: ${trader.id}, attempted soldAtPrice: ${soldAtPrice}, attempted quantity: ${trader.quantity}`, err))
+        .catch(async err => {
+            console.log(`ERROR MAKING SALE, id: ${trader.id}, attempted soldAtPrice: ${soldAtPrice}, attempted quantity: ${trader.quantity}`, JSON.stringify(err))
+            switch (err.name) {
+                case "InsufficientFunds":
+                    let deleteBool = await confirmInsuficientFunds(trader)
+                    console.log(`ERROR: Trader ${trader.id} quantify exceeds coinbase ${trader.asset} asset balance of ${deleteBool}`) //deleteBool is returned as false if not to be deleted or as the quantity of asset remaining if should be deleted
+                    console.log(deleteBool)
+                    if (deleteBool) {
+                        let deleted = await forceLiquidateTrader(trader, false, deleteBool);
+                        !!deleted ? SEND_SMS((`ERROR: Trader ${trader.id} quantify exceeded coinbase ${trader.asset} asset balance \n\nSOLD OFF AND LIQUIDATED`)) : console.log(`error selling and deleting trader ${trader.id}`)
+                    }
+                    break;
+                default: console.log("Automatic sell error handling capabilities out of scope")
+            } 
+        })
     
 };
 
@@ -148,7 +188,7 @@ const modifySales = async () => { //set up to clean up "duration" field of Sale
     }
 };
 
-const modifyTraders = async () => {
+const dynamicModifyTradersFunction = async () => {
     let traders = await Trader.find({});
 
     let lockedPrinciple = 0;
@@ -168,7 +208,8 @@ const modifyTraders = async () => {
     console.log(lockedPrinciple, liquidPrinciple, lockedPrinciple - liquidPrinciple);
 };
 
-// modifyTraders()
+// deleteTrader("KC4y5aqBFLt");
+
 
 // reactivateLiquidatedTrader("krGbWxyfiyO6");
 // modifySales()

@@ -15,7 +15,7 @@ const checkCoinbaseFunds = async () => {
 
 const getCoinbaseBalances = async (symbol) => {
     let balance = await coinbasepro.fetchBalance()
-    console.log(symbol ? balance.total[symbol] : balance.total)
+    // console.log(symbol ? balance.total[symbol] : balance.total)
     return balance;
 }
 
@@ -27,6 +27,7 @@ const makeCoinbaseBuy = async (asset, quantity) => {
 const makeCoinbaseSell = async (asset, quantity) => {
     let sellOrder = await coinbasepro.createOrder(asset, "market", "sell", quantity)
     console.log(sellOrder)
+    return sellOrder;
 }
 
 const makeCoinbaseSellWithProfit = async (asset, quantities) => {
