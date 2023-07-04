@@ -560,7 +560,7 @@ var testParams = {
 // findLatestTrader('KNC-USD')
 // testStrategy("KNC-USD")
 
-module.exports = { analyze, buyBool, reviewTradersSellTargets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, findLatestTrader, generateAssetsForClient, generateAssetData, grabCandleData };
+module.exports = { analyze, buyBool, reviewTradersSellTargets, checkForBuyPositions, buyPositions, grab_all_product_ids, generateMarketAverages, generatePerformance, findLatestTrader, generateAssetsForClient, generateAssetData, grabCandleData, UPDATE_META_DATA };
 
 //DEPRECATED ORIGINAL STRATEGIES
 // let [meanThree, meanTwelve, meanSeventyFive, lowThree, lowTwelve, lowSeventyFive] = [performance.proxToMean.three, performance.proxToMean.twelve, performance.proxToMean.seventyFive, performance.proxToLow.three, performance.proxToLow.twelve, performance.proxToLow.seventyFive];

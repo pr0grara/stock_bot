@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 const config = require('./config');
 const { CREATE_LOOP } = require('./util');
 const { runAllTraders, makeNewTrader } = require('./stock_util/trader');
-const { reviewTradersSellTargets, checkForBuyPositions, buyPositions } = require('./stock_util/coinbasepro/analyze');
+const { reviewTradersSellTargets, checkForBuyPositions, buyPositions, UPDATE_META_DATA } = require('./stock_util/coinbasepro/analyze');
 const { cleanTokens } = require('./authorize_util');
 
 mongoose.connect(process.env.AZBSTOCKBOT_MONGO)
@@ -36,6 +36,7 @@ if (config.PROD) CREATE_LOOP(runAllTraders, 0.5);
 if (config.PROD) CREATE_LOOP(() => {
     cleanTokens()
     buyPositions(makeNewTrader);
+    UPDATE_META_DATA();
 }, 120);
 // if (config.PROD) CREATE_LOOP(async () => {
 //     // await reviewTradersSellTargets()
