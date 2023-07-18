@@ -524,6 +524,7 @@ const generateAssetsForClient = async () => {
     for (const product_id of product_ids) {
         assetsObj[product_id] = {};
         let analysis = await analyze(product_id, 900, lastReq);
+        let rawData = await grabCandleData(product_id, 900, lastReq)
         lastReq = Date.now();
         let data = await generateAssetData(product_id);
         let performance = generatePerformance(data);
@@ -531,11 +532,14 @@ const generateAssetsForClient = async () => {
         assetsObj[product_id]["data"] = data;
         assetsObj[product_id]["performance"] = performance;
         assetsObj[product_id]["ticker"] = product_id.split('-')[0];
+        assetsObj[product_id]["raw"] = rawData;
     };
 
     // console.log(JSON.stringify(assetsObj))
     return assetsObj;
 };
+
+// generateAssetsForClient()
 
 var testParams = {
     product_ids: ["AVAX-USD", "MANA-USD"],

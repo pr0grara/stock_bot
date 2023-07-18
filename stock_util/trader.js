@@ -86,7 +86,7 @@ const liquidateTrader = (trader, soldAtPrice) => {
             let purchaseUnix = purchaseDate.getTime();
             let duration = Date.now() - purchaseUnix;
             duration = (duration / 1000 / 60 / 60 / 24).toFixed(1);
-            SEND_SMS(`${id} (${trader.asset}, $${purchaseAmnt}, ${duration} hrs) sold ${quantity.toFixed(4)} @ $${soldAtPrice}\nPurchase price was ${trader.purchasePrice} for $${profit.toFixed(2)} profit`);
+            SEND_SMS(`${id} (${trader.asset}, $${purchaseAmnt}, ${(duration * 24).toFixed(1)} hrs) sold ${quantity.toFixed(4)} @ $${soldAtPrice}\nPurchase price was ${trader.purchasePrice} for $${profit.toFixed(2)} profit`);
             LiquidatedTrader.insertMany(trader).then(() => Trader.findOneAndRemove({ id: trader.id }).catch(e => console.log(e)));
             let newSale = new Sale({
                 id: idGenerator(),
